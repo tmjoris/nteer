@@ -1,0 +1,5 @@
+{
+  "name": "MedVoyage",
+  "description": "A smart travel companion for managing prescriptions across time zones and borders.",
+  "requestFramePermissions": ["camera"]
+}

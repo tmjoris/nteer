@@ -25,3 +25,33 @@ export interface TravelAdvice {
   tips: string[];
   pharmacyInfo: string;
 }
+
+export type Cause = 'Environment' | 'Education' | 'Health' | 'Animal Welfare' | 'Community' | 'Arts';
+
+export interface VolunteerSite {
+  id: string;
+  name: string;
+  location: string;
+  cause: Cause;
+  description: string;
+  impactScore: number;
+  image: string;
+  distance?: string;
+}
+
+export interface VolunteerOpportunity {
+  id: string;
+  siteId: string;
+  title: string;
+  date: string;
+  duration: string;
+  requirements: string[];
+}
+
+export interface SiteAdvice {
+  preparation: string;
+  whatToBring: string[];
+  safetyTips: string[];
+  impactSummary: string;
+}
+

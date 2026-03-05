@@ -60,6 +60,26 @@ const MOCK_SITES: VolunteerSite[] = [
   }
 ];
 
+type Poi = { key: string, location: google.maps.LatLngLiteral, name: string, cause: string, capacity: number, current: number, impactScore: number };
+
+const locations: Poi[] = [
+  { key: 'operaHouse', location: { lat: -33.8567844, lng: 151.213108 }, name: 'Sydney Opera House Volunteers', cause: 'Arts', capacity: 50, current: 32, impactScore: 95 },
+  { key: 'tarongaZoo', location: { lat: -33.8472767, lng: 151.2188164 }, name: 'Taronga Zoo Wildlife Care', cause: 'Animal Welfare', capacity: 30, current: 28, impactScore: 98 },
+  { key: 'manlyBeach', location: { lat: -33.8209738, lng: 151.2563253 }, name: 'Manly Beach Cleanup', cause: 'Environment', capacity: 100, current: 45, impactScore: 92 },
+  { key: 'hyderPark', location: { lat: -33.8690081, lng: 151.2052393 }, name: 'Hyde Park Gardeners', cause: 'Environment', capacity: 20, current: 12, impactScore: 88 },
+  { key: 'theRocks', location: { lat: -33.8587568, lng: 151.2058246 }, name: 'The Rocks Heritage Guides', cause: 'Education', capacity: 15, current: 8, impactScore: 90 },
+  { key: 'circularQuay', location: { lat: -33.858761, lng: 151.2055688 }, name: 'Circular Quay Info Point', cause: 'Community', capacity: 10, current: 9, impactScore: 85 },
+  { key: 'harbourBridge', location: { lat: -33.852228, lng: 151.2038374 }, name: 'Bridge Climb Support', cause: 'Arts', capacity: 25, current: 15, impactScore: 87 },
+  { key: 'kingsCross', location: { lat: -33.8737375, lng: 151.222569 }, name: 'Kings Cross Community Kitchen', cause: 'Health', capacity: 40, current: 38, impactScore: 96 },
+  { key: 'botanicGardens', location: { lat: -33.864167, lng: 151.216387 }, name: 'Royal Botanic Gardens Help', cause: 'Environment', capacity: 35, current: 20, impactScore: 93 },
+  { key: 'museumOfSydney', location: { lat: -33.8636005, lng: 151.2092542 }, name: 'Museum of Sydney Docents', cause: 'Education', capacity: 12, current: 5, impactScore: 89 },
+  { key: 'maritimeMuseum', location: { lat: -33.869395, lng: 151.198648 }, name: 'Maritime Museum Crew', cause: 'Arts', capacity: 20, current: 18, impactScore: 91 },
+  { key: 'kingStreetWharf', location: { lat: -33.8665445, lng: 151.1989808 }, name: 'King St Wharf Ambassadors', cause: 'Community', capacity: 8, current: 4, impactScore: 82 },
+  { key: 'aquarium', location: { lat: -33.869627, lng: 151.202146 }, name: 'Sea Life Aquarium Guides', cause: 'Animal Welfare', capacity: 25, current: 22, impactScore: 94 },
+  { key: 'darlingHarbour', location: { lat: -33.87488, lng: 151.1987113 }, name: 'Darling Harbour Events', cause: 'Community', capacity: 60, current: 55, impactScore: 97 },
+  { key: 'barangaroo', location: { lat: -33.8605523, lng: 151.1972205 }, name: 'Barangaroo Reserve Rangers', cause: 'Environment', capacity: 15, current: 10, impactScore: 92 },
+];
+
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<'volunteer' | 'host'>('volunteer');
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,6 +87,7 @@ export default function Dashboard() {
   const [siteAdvice, setSiteAdvice] = useState<SiteAdvice | null>(null);
   const [loadingAdvice, setLoadingAdvice] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [myImpact, setMyImpact] = useState({ hours: 12, sites: 3, points: 450 });
   const navigate = useNavigate();
 
@@ -82,10 +103,23 @@ export default function Dashboard() {
     setLoadingAdvice(true);
     setLoadingAdvice(false);
   };
+
+  const handleSelectPoi = (poi: Poi) => {
+    setSearchQuery(poi.name);
+    setShowDropdown(false);
+  };
   
   const handleSignUp = () => {
     navigate("/signup");
   }
+
+    const filteredPois = useMemo(() => {
+      if (!searchQuery) return [];
+      return locations.filter(poi => 
+        poi.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        poi.cause.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }, [searchQuery]);
 
   return (
     <div className="min-h-screen bg-brand-50 text-brand-950 font-sans selection:bg-brand-200">
@@ -138,13 +172,43 @@ export default function Dashboard() {
                   placeholder="Enter cause or location..." 
                   className="w-full py-3 bg-transparent outline-none text-lg"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowDropdown(true);
+                  }}
+                  onFocus={() => setShowDropdown(true)}
                 />
               </div>
               <button className="bg-brand-950 text-white px-8 py-4 rounded-xl font-bold hover:bg-brand-800 transition-all">
                 Search
               </button>
             </div>
+            <AnimatePresence>
+            {showDropdown && filteredPois.length > 0 && (
+                <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className=" top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-brand-100 z-[60] overflow-hidden max-h-64 overflow-y-auto"
+                >
+                {filteredPois.map(poi => (
+                    <button
+                    key={poi.key}
+                    onClick={() => handleSelectPoi(poi)}
+                    className="w-full p-4 text-left hover:bg-brand-50 flex items-center gap-3 transition-colors border-b border-brand-50 last:border-0"
+                    >
+                    <div className="p-2 bg-brand-100 rounded-lg">
+                        <MapPin className="w-4 h-4 text-brand-600" />
+                    </div>
+                    <div>
+                        <div className="font-bold text-sm text-brand-950">{poi.name}</div>
+                        <div className="text-xs text-brand-400 uppercase tracking-widest">{poi.cause}</div>
+                    </div>
+                    </button>
+                ))}
+                </motion.div>
+            )}
+            </AnimatePresence>
           </div>
         </div>
 

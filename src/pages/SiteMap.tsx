@@ -66,7 +66,7 @@ const SiteMap: React.FC<SiteMapProps> = ({ onBack }) => {
             <div className="hidden md:flex items-center gap-6 text-sm font-medium text-brand-300">
               <a href="/sites" className="hover:text-white transition-colors">Find Sites</a>
               <a href="#" className="hover:text-white transition-colors">List Your Site</a>
-              <a href="#" className="hover:text-white transition-colors">About</a>
+              <a href="/about" className="hover:text-white transition-colors">About</a>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -87,7 +87,7 @@ const SiteMap: React.FC<SiteMapProps> = ({ onBack }) => {
                     </button>
                     <div>
                     <h1 className="text-3xl font-serif font-bold">Find Volunteer Sites</h1>
-                    <p className="text-brand-500">Explore opportunities across Sydney</p>
+                    <p className="text-brand-500">Explore opportunities across Kenya</p>
                     </div>
                 </div>
 
@@ -139,7 +139,7 @@ const SiteMap: React.FC<SiteMapProps> = ({ onBack }) => {
             </div>
 
             <div className="rounded-[2.5rem] overflow-hidden shadow-2xl border border-brand-200 bg-white">
-                <APIProvider apiKey={import.meta.env.MAPS_API_KEY} onLoad={() => console.log('Maps API has loaded.')}>
+                <APIProvider apiKey={import.meta.env.VITE_MAPS_API_KEY} onLoad={() => console.log('Maps API has loaded.')}>
                     <div className="relative h-[500px]">
                     <Map
                         style={{ width: '100%', height: '100%' }}

@@ -1,3 +1,4 @@
 node_modules
 .env
 .vite
+package-lock.json

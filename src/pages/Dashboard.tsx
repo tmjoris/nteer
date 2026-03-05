@@ -25,6 +25,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { VolunteerSite, SiteAdvice } from '../types';
 import { cn } from '../lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 const MOCK_SITES: VolunteerSite[] = [
   {
@@ -59,7 +60,7 @@ const MOCK_SITES: VolunteerSite[] = [
   }
 ];
 
-export default function App() {
+export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<'volunteer' | 'host'>('volunteer');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSite, setSelectedSite] = useState<VolunteerSite | null>(null);
@@ -67,6 +68,7 @@ export default function App() {
   const [loadingAdvice, setLoadingAdvice] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [myImpact, setMyImpact] = useState({ hours: 12, sites: 3, points: 450 });
+  const navigate = useNavigate();
 
   const filteredSites = useMemo(() => {
     return MOCK_SITES.filter(site => 
@@ -80,6 +82,10 @@ export default function App() {
     setLoadingAdvice(true);
     setLoadingAdvice(false);
   };
+  
+  const handleSignUp = () => {
+    navigate("/signup");
+  }
 
   return (
     <div className="min-h-screen bg-brand-50 text-brand-950 font-sans selection:bg-brand-200">
@@ -89,7 +95,7 @@ export default function App() {
           <div className="flex items-center gap-8">
             <h1 className="text-2xl font-serif font-bold tracking-tight">Nteer</h1>
             <div className="hidden md:flex items-center gap-6 text-sm font-medium text-brand-300">
-              <a href="#" className="hover:text-white transition-colors">Find Sites</a>
+              <a href="/sites" className="hover:text-white transition-colors">Find Sites</a>
               <a href="#" className="hover:text-white transition-colors">List Your Site</a>
               <a href="#" className="hover:text-white transition-colors">About</a>
             </div>
@@ -102,7 +108,7 @@ export default function App() {
             <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
               {isMenuOpen ? <X /> : <Menu />}
             </button>
-            <button className="bg-white text-brand-950 px-4 py-2 rounded-full text-sm font-bold hover:bg-brand-100 transition-colors">
+            <button className="bg-white text-brand-950 px-4 py-2 rounded-full text-sm font-bold hover:bg-brand-100 transition-colors" onClick={handleSignUp}>
               Sign Up
             </button>
           </div>

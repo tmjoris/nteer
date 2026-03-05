@@ -1,7 +1,12 @@
 import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+
+process.loadEnvFile();
+const apiKey = process.env.FIREBASE_API_KEY;
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBpjZRRuZ105bucc7kZMEf6SeGMeRcC2K8",
+  apiKey: apiKey,
   authDomain: "nteervolunteers.firebaseapp.com",
   projectId: "nteervolunteers",
   storageBucket: "nteervolunteers.firebasestorage.app",
@@ -10,3 +15,9 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+const db = getFirestore(app); 
+const auth = getAuth(app); 
+
+const firebaseServices = { auth, app, db };
+
+export default firebaseServices;

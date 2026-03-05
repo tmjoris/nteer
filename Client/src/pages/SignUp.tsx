@@ -78,7 +78,6 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp }) => {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="John Doe"
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
                 required
               />
@@ -230,17 +229,7 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp }) => {
                 />
               </svg>
               <span className="text-sm font-medium">Google</span>
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="button"
-              className="flex items-center justify-center space-x-2 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <Github className="w-5 h-5" />
-              <span className="text-sm font-medium">GitHub</span>
-            </motion.button>
+            </motion.button>        
           </div>
 
           {/* Sign In Link */}

@@ -19,7 +19,7 @@ app.use("/api/profile", profileRouter);
 app.use("/api/update-profile", profileUpdate);
 
 app.get("/", async (req, res) => {
-  res.send("Welcome");  
+  res.send("Welcome to Nteer's backend");  
 });
 
 

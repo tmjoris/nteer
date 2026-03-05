@@ -16,6 +16,7 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [role, setRole] = useState("volunteer");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,6 +152,22 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp }) => {
                 {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
+          </div>
+
+          {/* Role Selection */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              I am a...
+            </label>
+
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+            >
+              <option value="volunteer">Volunteer</option>
+              <option value="supervisor">Supervisor</option>
+            </select>
           </div>
 
           {/* Terms Agreement */}

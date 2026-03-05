@@ -9,36 +9,28 @@ type Poi = { key: string, location: google.maps.LatLngLiteral, name: string, cau
 
 const locations: Poi[] = [
   { key: 'operaHouse', location: { lat: -1.3012375801102751,  lng: 36.97880585878275 }, name: "Alice Children's Home Utawala Volunteers", cause: 'Arts', capacity: 50, current: 32, impactScore: 95 },
-  { key: 'tarongaZoo', location: { lat: -1.2873728295381877, lng: 36.893859632980664 }, name: 'Baby Blessing Children’s Home Umoja', cause: 'Animal Welfare', capacity: 30, current: 28, impactScore: 98 },
-  { key: 'manlyBeach', location: { lat: -1.209201349185106, lng: 36.898414969228945 }, name: 'Brook School For the Deaf & Autistic', cause: 'Environment', capacity: 100, current: 45, impactScore: 92 },
+  { key: 'tarongaZoo', location: { lat: -1.2873728295381877, lng: 36.893859632980664 }, name: 'Baby Blessing Children’s Home Umoja', cause: 'Animal Welfare', capacity: 30, current: 30, impactScore: 98 },
+  { key: 'manlyBeach', location: { lat: -1.209201349185106, lng: 36.898414969228945 }, name: 'Brook School For the Deaf & Autistic', cause: 'Environment', capacity: 45, current: 45, impactScore: 92 },
   { key: 'hyderPark', location: { lat:-1.2629099281992866, lng:36.9208903022985 }, name: 'Baraka Children’s Home Kahawa West', cause: 'Environment', capacity: 20, current: 12, impactScore: 88 },
-  { key: 'theRocks', location: { lat: -1.2442610882890712, lng:36.884846553887904 }, name: 'Babadogo Health Centre', cause: 'Education', capacity: 15, current: 8, impactScore: 90 },
+  { key: 'theRocks', location: { lat: -1.2442610882890712, lng:36.884846553887904 }, name: 'Babadogo Health Centre', cause: 'Education', capacity: 8, current: 8, impactScore: 90 },
   { key: 'circularQuay', location: { lat: -1.208413392973839, lng: 36.89159716738197 }, name: 'Bishop Opera Luigi Zimmerman', cause: 'Community', capacity: 10, current: 9, impactScore: 85 },
-  { key: 'harbourBridge', location: { lat: -33.852228, lng: 151.2038374 }, name: 'Bridge Climb Support', cause: 'Arts', capacity: 25, current: 15, impactScore: 87 },
+  { key: 'harbourBridge', location: { lat: -1.2982490127116522,lng: 36.892197071050106 }, name: ' Cerebral Palsy Society of Kenya Donholm', cause: 'Arts', capacity: 25, current: 15, impactScore: 87 },
   { key: 'kingsCross', location: { lat: -33.8737375, lng: 151.222569 }, name: 'Kings Cross Community Kitchen', cause: 'Health', capacity: 40, current: 38, impactScore: 96 },
   { key: 'botanicGardens', location: { lat: -33.864167, lng: 151.216387 }, name: 'Royal Botanic Gardens Help', cause: 'Environment', capacity: 35, current: 20, impactScore: 93 },
   { key: 'museumOfSydney', location: { lat: -33.8636005, lng: 151.2092542 }, name: 'Museum of Sydney Docents', cause: 'Education', capacity: 12, current: 5, impactScore: 89 },
   { key: 'maritimeMuseum', location: { lat: -33.869395, lng: 151.198648 }, name: 'Maritime Museum Crew', cause: 'Arts', capacity: 20, current: 18, impactScore: 91 },
   { key: 'kingStreetWharf', location: { lat: -33.8665445, lng: 151.1989808 }, name: 'King St Wharf Ambassadors', cause: 'Community', capacity: 8, current: 4, impactScore: 82 },
-  { key: 'aquarium', location: { lat: -33.869627, lng: 151.202146 }, name: 'Sea Life Aquarium Guides', cause: 'Animal Welfare', capacity: 25, current: 22, impactScore: 94 },
+  { key: 'aquarium', location: { lat: -1.203956234105944, lng: 36.877991753887706 }, name: 'Dorothy Children`s Home Thome', cause: 'Animal Welfare', capacity: 25, current: 22, impactScore: 94 },
   { key: 'darlingHarbour', location: { lat: -33.87488, lng: 151.1987113 }, name: 'Darling Harbour Events', cause: 'Community', capacity: 60, current: 55, impactScore: 97 },
   { key: 'barangaroo', location: { lat: -33.8605523, lng: 151.1972205 }, name: 'Barangaroo Reserve Rangers', cause: 'Environment', capacity: 15, current: 10, impactScore: 92 },
 ];
 /**
-1. Alice Children’s Home Utawala next to Chief’s camp (2std)
-2. Baby Blessing Children’s Home Umoja Tena Estate (Hands Only) (2std)
-3. Brook School For the Deaf & Autistic Kamiti Road 9 (7stds)
-4. Baraka Children’s Home Kahawa West (Hands on only) (3stds)
-5. Baraka Al Ibrahim Children`s Center Kibera (Karanja Road) (2stds)
-6. Babadogo Health Centre Babadogo/Ruraka(Hands on only)(3stds)
-7. Bishop Opera Luigi Zimmerman (15stds)
 8. Cerebral Palsy Society of Kenya Donholm (Hands on Only) (2stds)
 9. Cottolengo centre Karen 0706397095 (Hands on Only) (2stds)
 10. Child Rescue (Uzima Wa Watoto) Bahati, Makadara (Hands On only) (2stds)
 11. Christ Chapel Children`s Home Huruma (3stds)
 12. Community Progressive Focus centre Embakasi Area 0722332738 (Hands on only) (4stds)
 13. Dream Centre: Baby Rescue and Care(Home Of Hope) Donholm Phase 8,Police Line (Hands on only)
-14. Dorothy Children`s Home Thome/Marurui Area (Hands on only) (10 stds)
 15. First Love Kenya Karen (2stds)
 16. Happy Life Children`s Home Roysambu (Hands on only) (10 stds)
  */
@@ -271,7 +263,15 @@ const PoiMarkers = (props: { pois: Poi[] }) => {
           key={poi.key}
           position={poi.location}
         >
-          <Pin background={'#141414'} glyphColor={'#fff'} borderColor={'#fff'} />
+          <div className="relative flex h-6 w-6">
+          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 
+            ${ poi.current===poi.capacity? "bg-red-400": "bg-blue-400" }`}>
+            </span>
+          <span className={`relative inline-flex rounded-full h-6 w-6 shadow-lg  
+            ${poi.current===poi.capacity ? "bg-red-700 shadow-red-500/50" : "bg-blue-700 shadow-blue-500/50"}`}>
+          </span>
+        </div>
+
         </AdvancedMarker>
       ))}
     </>

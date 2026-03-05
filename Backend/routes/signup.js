@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.post("/", async(req, res) => {
     try {
-        const { fullName, email, password, phoneNumber, userRole } = req.body;
+        const { fullName, email, password, phoneNumber, userRole, city } = req.body;
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         const userCollection = collection(db, "user");
@@ -17,6 +17,7 @@ router.post("/", async(req, res) => {
             fullName, 
             phoneNumber, 
             userRole,
+            city,
             createdOn: serverTimestamp()
         });
         console.log('User created with User ID:', docRef.id);

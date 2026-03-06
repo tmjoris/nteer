@@ -7,32 +7,20 @@ import { useNavigate } from 'react-router-dom';
 type Poi = { key: string, location: google.maps.LatLngLiteral, name: string, cause: string, capacity: number, current: number, impactScore: number };
 
 const locations: Poi[] = [
-  { key: 'operaHouse', location: { lat: -1.3012375801102751,  lng: 36.97880585878275 }, name: "Alice Children's Home Utawala Volunteers", cause: 'Arts', capacity: 50, current: 32, impactScore: 95 },
-  { key: 'tarongaZoo', location: { lat: -1.2873728295381877, lng: 36.893859632980664 }, name: 'Baby Blessing Children’s Home Umoja', cause: 'Animal Welfare', capacity: 30, current: 30, impactScore: 98 },
-  { key: 'manlyBeach', location: { lat: -1.209201349185106, lng: 36.898414969228945 }, name: 'Brook School For the Deaf & Autistic', cause: 'Environment', capacity: 45, current: 45, impactScore: 92 },
-  { key: 'hyderPark', location: { lat:-1.2629099281992866, lng:36.9208903022985 }, name: 'Baraka Children’s Home Kahawa West', cause: 'Environment', capacity: 20, current: 12, impactScore: 88 },
-  { key: 'theRocks', location: { lat: -1.2442610882890712, lng:36.884846553887904 }, name: 'Babadogo Health Centre', cause: 'Education', capacity: 8, current: 8, impactScore: 90 },
-  { key: 'circularQuay', location: { lat: -1.208413392973839, lng: 36.89159716738197 }, name: 'Bishop Opera Luigi Zimmerman', cause: 'Community', capacity: 10, current: 9, impactScore: 85 },
-  { key: 'harbourBridge', location: { lat: -1.2982490127116522,lng: 36.892197071050106 }, name: ' Cerebral Palsy Society of Kenya Donholm', cause: 'Arts', capacity: 25, current: 15, impactScore: 87 },
-  { key: 'kingsCross', location: { lat: -33.8737375, lng: 151.222569 }, name: 'Kings Cross Community Kitchen', cause: 'Health', capacity: 40, current: 38, impactScore: 96 },
-  { key: 'botanicGardens', location: { lat: -33.864167, lng: 151.216387 }, name: 'Royal Botanic Gardens Help', cause: 'Environment', capacity: 35, current: 20, impactScore: 93 },
-  { key: 'museumOfSydney', location: { lat: -33.8636005, lng: 151.2092542 }, name: 'Museum of Sydney Docents', cause: 'Education', capacity: 12, current: 5, impactScore: 89 },
-  { key: 'maritimeMuseum', location: { lat: -33.869395, lng: 151.198648 }, name: 'Maritime Museum Crew', cause: 'Arts', capacity: 20, current: 18, impactScore: 91 },
-  { key: 'kingStreetWharf', location: { lat: -33.8665445, lng: 151.1989808 }, name: 'King St Wharf Ambassadors', cause: 'Community', capacity: 8, current: 4, impactScore: 82 },
-  { key: 'aquarium', location: { lat: -1.203956234105944, lng: 36.877991753887706 }, name: 'Dorothy Children`s Home Thome', cause: 'Animal Welfare', capacity: 25, current: 22, impactScore: 94 },
-  { key: 'darlingHarbour', location: { lat: -33.87488, lng: 151.1987113 }, name: 'Darling Harbour Events', cause: 'Community', capacity: 60, current: 55, impactScore: 97 },
-  { key: 'barangaroo', location: { lat: -33.8605523, lng: 151.1972205 }, name: 'Barangaroo Reserve Rangers', cause: 'Environment', capacity: 15, current: 10, impactScore: 92 },
-];
-/**
-8. Cerebral Palsy Society of Kenya Donholm (Hands on Only) (2stds)
-9. Cottolengo centre Karen 0706397095 (Hands on Only) (2stds)
-10. Child Rescue (Uzima Wa Watoto) Bahati, Makadara (Hands On only) (2stds)
-11. Christ Chapel Children`s Home Huruma (3stds)
-12. Community Progressive Focus centre Embakasi Area 0722332738 (Hands on only) (4stds)
-13. Dream Centre: Baby Rescue and Care(Home Of Hope) Donholm Phase 8,Police Line (Hands on only)
-15. First Love Kenya Karen (2stds)
-16. Happy Life Children`s Home Roysambu (Hands on only) (10 stds)
- */
+{ key: "alice_home_utawala", location: { lat: -1.3012375801102751, lng: 36.97880585878275 }, name: "Alice Children's Home Utawala Volunteers", cause: "Arts", capacity: 50, current: 32, impactScore: 95 },
+{ key: "baby_blessing_umoja", location: { lat: -1.2873728295381877, lng: 36.893859632980664 }, name: "Baby Blessing Children’s Home Umoja", cause: "Animal Welfare", capacity: 30, current: 30, impactScore: 98 },
+{ key: "mama_fatma_home", location: { lat: -1.209201349185106, lng: 36.898414969228945 }, name: "Mama Fatma Goodwill Childrens Home", cause: "Environment", capacity: 45, current: 45, impactScore: 92 },
+{ key: "baraka_home_kahawa_west", location: { lat: -1.2629099281992866, lng: 36.9208903022985 }, name: "Baraka Children’s Home Kahawa West", cause: "Environment", capacity: 20, current: 12, impactScore: 88 },
+{ key: "babadogo_health_centre", location: { lat: -1.2442610882890712, lng: 36.884846553887904 }, name: "Babadogo Health Centre", cause: "Education", capacity: 8, current: 8, impactScore: 90 },
+{ key: "bishop_luigi_zimmerman", location: { lat: -1.208413392973839, lng: 36.89159716738197 }, name: "Bishop Opera Luigi Zimmerman", cause: "Community", capacity: 10, current: 9, impactScore: 85 },
+{ key: "cerebral_palsy_donholm", location: { lat: -1.2982490127116522, lng: 36.892197071050106 }, name: "Cerebral Palsy Society of Kenya Donholm", cause: "Arts", capacity: 25, current: 15, impactScore: 87 },
+{ key: "cottolengo_centre_karen", location: { lat: -1.3394082805578793, lng: 36.72763829943795 }, name: "Cottolengo Center", cause: "Health", capacity: 40, current: 38, impactScore: 96 },
+{ key: "karura_health_centre", location: { lat: -1.2561360998348625, lng: 36.84309555397505 }, name: "Karura Health Centre", cause: "Environment", capacity: 35, current: 20, impactScore: 93 },
+{ key: "christ_chapel_home", location: { lat: -1.2590043787909624, lng: 36.87634262088299 }, name: "Christ Chapel Children`s Home", cause: "Education", capacity: 12, current: 5, impactScore: 89 },
+{ key: "kahawa_west_health", location: { lat: -1.190159000972583, lng: 36.91430419943684 }, name: "Kahawa West Health Centre", cause: "Arts", capacity: 20, current: 18, impactScore: 91 },
+{ key: "community_progressive_focus", location: { lat: -1.2516616096928943, lng: 36.94328748096306 }, name: "Community Progressive Focus Centre", cause: "Community", capacity: 8, current: 4, impactScore: 82 },
+{ key: "dorothy_home_thome", location: { lat: -1.203956234105944, lng: 36.877991753887706 }, name: "Dorothy Children`s Home Thome", cause: "Animal Welfare", capacity: 25, current: 22, impactScore: 94 },
+{ key: "first_love_karen", location: { lat: -1.3293579537441624, lng: 36.747473480963556 }, name: "First Love Kenya Karen", cause: "Community", capacity: 60, current: 55, impactScore: 97 },
 
 interface SiteMapProps {
   onBack: () => void;

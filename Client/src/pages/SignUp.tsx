@@ -1,41 +1,61 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Mail, Lock, Eye, EyeOff, User, ArrowRight, Github } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Mail, Lock, Eye, EyeOff, User, ArrowRight, Github, Phone, LocateIcon, Locate, Map, MapIcon, MapPinCheck, MapPinIcon } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { apiUrl } from '../config/api';
 
 interface SignUpProps {
   onSignUp?: (name: string, email: string, password: string) => void;
 }
 
 const SignUp: React.FC<SignUpProps> = ({ onSignUp }) => {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [role, setRole] = useState("volunteer");
+  const [formData, setFormData] = useState({
+    fullName:"",
+    email:"",
+    password:"",
+    userRole:"volunteer",
+    phoneNumber:"",
+    city:""
+  });
+  const passwordsMatch = confirmPassword.length === 0 || formData.password === confirmPassword;
+
+  const handleChange = (e) => {
+    const {name, value } = e.target;
+    setFormData(prev => ({
+        ...prev,
+        [name]:value
+      }))
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (password !== confirmPassword) {
+    if (formData.password !== confirmPassword) {
       alert("Passwords don't match!");
       return;
     }
 
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      if (onSignUp) {
-        onSignUp(name, email, password);
-      }
-      console.log('Sign up attempt:', { name, email, password, agreeTerms });
-      setIsLoading(false);
-    }, 1000);
+    try {
+      const response = await fetch(`${apiUrl}/api/signup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      });
+      const data = await response.json();
+      navigate("/signin");
+    } catch (error) {
+      console.error("Error during registration: ", error);
+    }
   };
 
   return (
@@ -62,7 +82,7 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp }) => {
             transition={{ delay: 0.3 }}
             className="text-gray-600"
           >
-            Join NTeer for smart travel planning
+            Join NTeer for easier site hunting
           </motion.p>
         </div>
 
@@ -77,8 +97,9 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp }) => {
               <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleChange}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
                 required
               />
@@ -94,8 +115,9 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp }) => {
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
                 placeholder="you@example.com"
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
                 required
@@ -112,9 +134,9 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp }) => {
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
                 className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
                 required
                 minLength={8}
@@ -138,10 +160,12 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp }) => {
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type={showConfirmPassword ? 'text' : 'password'}
+                name='confirmPassword'
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+                className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 
+                  focus:border-transparent outline-none transition-all
+                  ${passwordsMatch ? " border-gray-300" : "border-red-500"}`}
                 required
               />
               <button
@@ -153,21 +177,62 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp }) => {
               </button>
             </div>
           </div>
+          {!passwordsMatch && (
+            <p className="text-sm text-red-600">Passwords do not match</p>
+          )}
 
           {/* Role Selection */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
               I am a...
             </label>
-
             <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
+              name="userRole"
+              value={formData.userRole}
+              onChange={handleChange}
               className="w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
             >
               <option value="volunteer">Volunteer</option>
               <option value="supervisor">Supervisor</option>
             </select>
+          </div>
+          <p className="text-xs text-gray-500">Selected: {formData.userRole}</p>
+
+          {/*Phone Number*/}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Phone Number
+            </label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5"/>
+              <input
+                type="tel"
+                name="phoneNumber" 
+                placeholder="+254111111111" 
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+                required
+              />
+            </div>
+          </div>
+
+          {/* City Field */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              City of Residence
+            </label>
+            <div className="relative">
+              <MapPinIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                name='city'
+                value={formData.city}
+                onChange={handleChange}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+                required
+              />
+            </div>
           </div>
 
           {/* Terms Agreement */}

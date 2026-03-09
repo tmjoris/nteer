@@ -21,7 +21,7 @@ const locations: Poi[] = [
 { key: "community_progressive_focus", location: { lat: -1.2516616096928943, lng: 36.94328748096306 }, name: "Community Progressive Focus Centre", cause: "Community", capacity: 8, current: 4, impactScore: 82 },
 { key: "dorothy_home_thome", location: { lat: -1.203956234105944, lng: 36.877991753887706 }, name: "Dorothy Children`s Home Thome", cause: "Animal Welfare", capacity: 25, current: 22, impactScore: 94 },
 { key: "first_love_karen", location: { lat: -1.3293579537441624, lng: 36.747473480963556 }, name: "First Love Kenya Karen", cause: "Community", capacity: 60, current: 55, impactScore: 97 },
-
+]
 interface SiteMapProps {
   onBack: () => void;
 }

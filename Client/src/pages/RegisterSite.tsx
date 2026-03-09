@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
+import Navbar from "../components/Navbar"
 
 const CAUSES = [
   'Environment',
@@ -85,6 +86,8 @@ const RegisterSite: React.FC = () => {
   }
 
   return (
+    <>
+    <Navbar />
     <div className="min-h-screen bg-brand-50 pt-32 pb-20 px-6">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center gap-4 mb-12">
@@ -353,6 +356,7 @@ const RegisterSite: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

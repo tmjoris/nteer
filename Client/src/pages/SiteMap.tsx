@@ -27,7 +27,7 @@ const locations: Poi[] = [
 { key: "brook_school_deaf_kamiti", location:{lat: -1.209222802074535, lng: 36.89838278096287}, name:"Brook School for the Deaf & Autistic Kamiti Road", cause:"Education", capacity:15, current:6, impactScore:95 },
 { key: "baraka_al_ibrahim_kibera", location:{lat:-1.3146827159107064, lng: 36.78502003196789}, name:"Baraka Za Ibrahim Children’s Center Kibera", cause:"Community", capacity:10, current:6, impactScore:87 },
 { key: "cherish_watoto_learning_centre", location:{lat: -1.2722937796570462, lng: 36.75420329630453}, name:"Cherish Watoto Kenya Learning Centre", cause:"Education", capacity:45, current:22, impactScore:90 },
-{ key: "christs_victory_center_githurai", location:{lat: -1.2090619285117354, lng: 36.93263339445683}, name:"Christ's Victory Center Kimbo Githurai", cause:"Community", capacity:55, current:34, impactScore:85 }
+{ key: "christs_victory_center_githurai", location:{lat: -1.2090619285117354, lng: 36.93263339445683}, name:"Christ's Victory Center Kimbo Githurai", cause:"Community", capacity:55, current:34, impactScore:85 },
 { key: "community_progressive_focus_embakasi", location:{lat: -1.2515114418261875, lng: 36.94321237911563}, name:"Community Progressive Focus Centre", cause:"Community", capacity:22, current:14, impactScore:82 },
 { key: "dream_centre_home_of_hope", location:{lat: -1.2920849319075773, lng: 36.90275044691993}, name:"Dream Centre Baby Rescue and Care", cause:"Children", capacity:35, current:16, impactScore:93 },
 { key: "dagoretti_hidden_talent", location:{lat: -1.2977493935733377, lng: 36.74987346359377}, name:"Dagoretti Corner Child Care Program", cause:"Education", capacity:25, current:18, impactScore:88 },
@@ -58,6 +58,7 @@ const locations: Poi[] = [
 { key: "our_lady_of_guadalupe_kamiti", location:{lat: -1.300888203342576, lng: 36.77918826562205}, name:"Our Lady of Guadalupe Parish Adams", cause:"Community", capacity:20, current:11, impactScore:87 },
 { key: "rehema_pefa_home", location:{lat: -1.232884356170069, lng: 36.86738579445699}, name:"Rehema Pefa Home", cause:"Children", capacity:18, current:6, impactScore:90 },
 { key: "st_scholastica_uzima_hospital", location:{lat: -1.2536117733736407, lng: 36.85664315212764}, name:"St. Scholastica Uzima Hospital", cause:"Health", capacity:20, current:8, impactScore:91 },
+];
 
 interface SiteMapProps {
   onBack: () => void;

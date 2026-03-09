@@ -4,6 +4,7 @@ import SupervisorDashboard from "./pages/SupervisorDashboard"
 import SignIn from "./pages/SignIn"
 import SignUp from "./pages/SignUp"
 import SiteMap from "./pages/SiteMap"
+import RegisterSite from "./pages/RegisterSite"
 
 export default function App() {
     return (
@@ -15,6 +16,7 @@ export default function App() {
             <Route path="/sites" element={<SiteMap onBack={function (): void {
                 throw new Error("Function not implemented.")
             } }/>}/>
+            <Route path="/registersite" element={<RegisterSite/>}/>
         </Routes>
     )
 }

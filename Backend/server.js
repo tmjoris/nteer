@@ -5,6 +5,7 @@ import signUpRouter from './routes/signup.js';
 import loginRouter from './routes/login.js';
 import profileRouter from "./routes/profile.js";
 import profileUpdate from "./routes/profileUpdate.js";
+import location from "./routes/locations.js";
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use('/api/login', loginRouter);
 app.use('/api/users', userRoutes);
 app.use("/api/profile", profileRouter);
 app.use("/api/update-profile", profileUpdate);
+app.use("/api/locations", location);
 
 app.get("/", async (req, res) => {
   res.send("Welcome to Nteer's backend");  

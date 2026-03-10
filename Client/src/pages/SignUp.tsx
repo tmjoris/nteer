@@ -204,7 +204,6 @@ const SignUp = () => {
               <input
                 type="tel"
                 name="phoneNumber" 
-                placeholder="+254111111111" 
                 value={formData.phoneNumber}
                 onChange={handleChange}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
@@ -212,25 +211,7 @@ const SignUp = () => {
               />
             </div>
           </div>
-
-          {/* City Field */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              City of Residence
-            </label>
-            <div className="relative">
-              <MapPinIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                name='city'
-                value={formData.city}
-                onChange={handleChange}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-                required
-              />
-            </div>
-          </div>
-
+          
           {/* Sign Up Button */}
           <motion.button
             type="submit"

@@ -5,6 +5,7 @@ import SignIn from "./pages/SignIn"
 import SignUp from "./pages/SignUp"
 import SiteMap from "./pages/SiteMap"
 import RegisterSite from "./pages/RegisterSite"
+import About from "./pages/About"
 
 export default function App() {
     return (
@@ -17,6 +18,7 @@ export default function App() {
                 throw new Error("Function not implemented.")
             } }/>}/>
             <Route path="/registersite" element={<RegisterSite/>}/>
+            <Route path="/about" element={<About/>}/>
         </Routes>
     )
 }

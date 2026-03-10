@@ -13,6 +13,7 @@ const SignIn = () => {
     email:"",
     password:""
   });
+  const [error, setError] = useState("");
 
   const handleChange = (e) =>{
     const {name, value} = e.target;
@@ -32,9 +33,16 @@ const SignIn = () => {
         body: JSON.stringify(formData)
       });
       const data = await response.json();
+      if (!response.ok) {
+        setError(data.message);
+        setIsLoading(false);
+        return;
+      }
       navigate("/sites")
     } catch (error) {
       console.error("Error during signing in: ", error);
+      setError("Something went wrong. Please try again.");
+      setIsLoading(false);
     }
   };
 
@@ -129,7 +137,11 @@ const SignIn = () => {
               Forgot password?
             </Link>
           </div>
-
+          {error && (
+              <p className="text-red-500 text-sm mt-2">
+                {error}
+              </p>
+            )}
           {/* Login Button */}
           <motion.button
             type="submit"

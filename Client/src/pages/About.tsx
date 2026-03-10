@@ -79,7 +79,6 @@ const About = () => {
             <div className="aspect-video rounded-[3rem] overflow-hidden shadow-2xl">
               <img 
               src="volunteerNairobi.jpg"
-                // src="https://picsum.photos/seed/volunteer-nairobi/1200/800" 
                 alt="Community Service" 
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"

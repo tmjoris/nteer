@@ -203,7 +203,9 @@ export default function Dashboard() {
             <p className="text-xl opacity-80 mb-8 leading-relaxed">
               Are you an organization looking for passionate volunteers? Reach thousands of helpers ready to make an impact.
             </p>
-            <button className="bg-white text-brand-950 px-10 py-5 rounded-xl font-bold text-lg hover:bg-brand-100 transition-all flex items-center gap-3 group">
+            <button
+              onClick={() => navigate("/registersite")}
+              className="bg-white text-brand-950 px-10 py-5 rounded-xl font-bold text-lg hover:bg-brand-100 transition-all flex items-center gap-3 group">
               Get Started <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>

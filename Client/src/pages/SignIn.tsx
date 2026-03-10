@@ -1,32 +1,41 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { apiUrl } from '../config/api';
 
-interface SignInProps {
-  onSignIn?: (email: string, password: string) => void;
-}
-
-const SignIn: React.FC<SignInProps> = ({ onSignIn }) => {
-  const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+const SignIn = () => {
+  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false); 
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    email:"",
+    password:""
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleChange = (e) =>{
+    const {name, value} = e.target;
+    setFormData({...formData, [name]:value});
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      if (onSignIn) {
-        onSignIn(email, password);
-      }
-      console.log('Sign in attempt:', { email, password, rememberMe });
-      setIsLoading(false);
-    }, 1000);
+    try {
+      const response = await fetch(`${apiUrl}/api/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      });
+      const data = await response.json();
+      navigate("/sites")
+    } catch (error) {
+      console.error("Error during signing in: ", error);
+    }
   };
 
   return (
@@ -68,8 +77,9 @@ const SignIn: React.FC<SignInProps> = ({ onSignIn }) => {
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                name='email'
+                value={formData.email}
+                onChange={handleChange}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
                 required
               />
@@ -85,8 +95,9 @@ const SignIn: React.FC<SignInProps> = ({ onSignIn }) => {
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                name='password'
+                value={formData.password}
+                onChange={handleChange}
                 className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
                 required
               />

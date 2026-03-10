@@ -1,14 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Mail, Lock, Eye, EyeOff, User, ArrowRight, Github, Phone, LocateIcon, Locate, Map, MapIcon, MapPinCheck, MapPinIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { apiUrl } from '../config/api';
 
-interface SignUpProps {
-  onSignUp?: (name: string, email: string, password: string) => void;
-}
-
-const SignUp: React.FC<SignUpProps> = ({ onSignUp }) => {
+const SignUp = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -33,7 +29,7 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp }) => {
       }))
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (formData.password !== confirmPassword) {
@@ -234,27 +230,6 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp }) => {
               />
             </div>
           </div>
-
-          {/* Terms Agreement */}
-          <label className="flex items-start space-x-3">
-            <input
-              type="checkbox"
-              checked={agreeTerms}
-              onChange={(e) => setAgreeTerms(e.target.checked)}
-              className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500 mt-1"
-              required
-            />
-            <span className="text-sm text-gray-600">
-              I agree to the{' '}
-              <Link to="/terms" className="text-orange-600 hover:text-orange-800 hover:underline">
-                Terms of Service
-              </Link>{' '}
-              and{' '}
-              <Link to="/privacy" className="text-orange-600 hover:text-orange-800 hover:underline">
-                Privacy Policy
-              </Link>
-            </span>
-          </label>
 
           {/* Sign Up Button */}
           <motion.button

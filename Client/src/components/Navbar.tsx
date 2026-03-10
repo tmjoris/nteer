@@ -12,9 +12,11 @@ export default function Navbar() {
         
         {/* Left */}
         <div className="flex items-center gap-8">
-          <h1 className="text-2xl font-serif font-bold tracking-tight">
-            Nteer
-          </h1>
+            <Link to="/" className="hover:text-yellow transition-colors">
+            <h1 className="text-2xl font-serif font-bold tracking-tight">
+              Nteer
+            </h1>
+            </Link>
 
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-brand-300">
 

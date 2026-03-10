@@ -16,6 +16,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import Navbar from "../components/Navbar"
+import Footer from '../components/Footer';
 
 const CAUSES = [
   'Environment',
@@ -356,6 +357,7 @@ const RegisterSite: React.FC = () => {
         </div>
       </div>
     </div>
+    <Footer/>
     </>
   );
 };

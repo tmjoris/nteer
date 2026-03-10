@@ -3,6 +3,8 @@ import { APIProvider, Map, MapCameraChangedEvent, AdvancedMarker, Pin } from '@v
 import { Search, MapPin, Users, Star, ArrowLeft, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 type Poi = { key: string, location: google.maps.LatLngLiteral, name: string, cause: string, capacity: number, current: number, impactScore: number };
 
@@ -93,24 +95,7 @@ const SiteMap: React.FC<SiteMapProps> = ({ onBack }) => {
 
   return (
     <div className="max-h-screen bg-brand-50 pt-10">
-           {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 bg-brand-950 text-white px-6 py-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-8">
-            <h1 className="text-2xl font-serif font-bold tracking-tight">Nteer</h1>
-            <div className="hidden md:flex items-center gap-6 text-sm font-medium text-brand-300">
-              <a href="/sites" className="hover:text-white transition-colors">Find Sites</a>
-              <a href="#" className="hover:text-white transition-colors">List Your Site</a>
-              <a href="/about" className="hover:text-white transition-colors">About</a>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="bg-white text-brand-950 px-4 py-2 rounded-full text-sm font-bold hover:bg-brand-100 transition-colors" onClick={handleSignUp}>
-              Sign Up
-            </button>
-          </div>
-        </div>
-      </nav>
+        <Navbar />
         <div className="max-w-7xl mx-auto px-6 py-8">
             <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
@@ -238,44 +223,8 @@ const SiteMap: React.FC<SiteMapProps> = ({ onBack }) => {
                     </div>
                 </div>
             </div>
-
-        </div>
-        {/* Footer */}
-      <footer className="bg-brand-950 text-white py-20 px-6">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
-          <div className="col-span-1 md:col-span-2">
-            <h2 className="text-3xl font-serif font-bold mb-6">Nteer</h2>
-            <p className="text-brand-400 max-w-sm leading-relaxed">
-              We believe in the power of human connection. Our mission is to make volunteering as easy as ordering a ride, empowering everyone to serve their community.
-            </p>
           </div>
-          <div>
-            <h4 className="font-bold mb-6">Company</h4>
-            <ul className="space-y-4 text-brand-400 text-sm">
-              <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Newsroom</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-bold mb-6">Support</h4>
-            <ul className="space-y-4 text-brand-400 text-sm">
-              <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Safety</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Terms</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
-            </ul>
-          </div>
-        </div>
-        <div className="max-w-7xl mx-auto mt-20 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-brand-500">
-          <p>© 2026 Nteer Technologies Inc.</p>
-          <div className="flex gap-8">
-            <a href="#" className="hover:text-white transition-colors">English (US)</a>
-            <a href="#" className="hover:text-white transition-colors">Nairobi</a>
-          </div>
-        </div>
-      </footer>
+        <Footer/>
     </div>
   );
 };

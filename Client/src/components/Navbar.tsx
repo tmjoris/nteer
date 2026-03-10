@@ -1,5 +1,5 @@
-import React, { useState } from "react"
-import { Menu, X, Star } from "lucide-react"
+import { useState } from "react"
+import { Menu, X } from "lucide-react"
 import { useNavigate, Link } from "react-router-dom"
 
 export default function Navbar() {
@@ -22,7 +22,7 @@ export default function Navbar() {
               Find Sites
             </Link>
 
-            <Link to="/register-site" className="hover:text-white transition-colors">
+            <Link to="/registersite" className="hover:text-white transition-colors">
               List Your Site
             </Link>
 

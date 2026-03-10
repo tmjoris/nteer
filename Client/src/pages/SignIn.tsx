@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Github } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { apiUrl } from '../config/api';
 
 interface SignInProps {
   onSignIn?: (email: string, password: string) => void;

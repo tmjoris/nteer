@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { apiUrl } from '../config/api';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { firebaseAuth } from '../lib/firebase';
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -25,23 +26,12 @@ const SignIn = () => {
     setIsLoading(true);
     
     try {
-      const response = await fetch(`${apiUrl}/api/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(formData)
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        setError(data.message);
-        setIsLoading(false);
-        return;
-      }
+      await signInWithEmailAndPassword(firebaseAuth, formData.email, formData.password);
       navigate("/sites")
     } catch (error) {
       console.error("Error during signing in: ", error);
       setError("Something went wrong. Please try again.");
+    } finally {
       setIsLoading(false);
     }
   };

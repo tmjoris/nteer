@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Mail, Lock, Eye, EyeOff, User, ArrowRight, Github, Phone, LocateIcon, Locate, Map, MapIcon, MapPinCheck, MapPinIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { apiUrl } from '../config/api';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { firebaseAuth, firestore } from '../lib/firebase';
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -40,17 +42,27 @@ const SignUp = () => {
     setIsLoading(true);
     
     try {
-      const response = await fetch(`${apiUrl}/api/signup`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(formData)
+      const userCredential = await createUserWithEmailAndPassword(
+        firebaseAuth,
+        formData.email,
+        formData.password
+      );
+
+      await addDoc(collection(firestore, 'user'), {
+        email: formData.email,
+        fullName: formData.fullName,
+        phoneNumber: formData.phoneNumber,
+        userRole: formData.userRole,
+        city: formData.city,
+        createdOn: serverTimestamp(),
+        authUid: userCredential.user.uid,
       });
-      const data = await response.json();
+
       navigate("/signin");
     } catch (error) {
       console.error("Error during registration: ", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -215,7 +227,7 @@ const SignUp = () => {
           {/* Sign Up Button */}
           <motion.button
             type="submit"
-            disabled={isLoading || !agreeTerms}
+            disabled={isLoading}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className="w-full bg-gradient-to-r from-orange-500 to-amber-600 text-white py-3 rounded-lg font-semibold text-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"

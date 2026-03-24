@@ -6,9 +6,9 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
-type Poi = { key: string, location: google.maps.LatLngLiteral, name: string, cause: string, capacity: number, current: number, impactScore: number };
+export type Poi = { key: string, location: google.maps.LatLngLiteral, name: string, cause: string, capacity: number, current: number, impactScore: number };
 
-const locations: Poi[] = [
+export const locations: Poi[] = [
 { key: "alice_home_utawala", location: { lat: -1.3012375801102751, lng: 36.97880585878275 }, name: "Alice Children's Home Utawala Volunteers", cause: "Arts", capacity: 50, current: 32, impactScore: 95 },
 { key: "baby_blessing_umoja", location: { lat: -1.2873728295381877, lng: 36.893859632980664 }, name: "Baby Blessing Children’s Home Umoja", cause: "Animal Welfare", capacity: 30, current: 30, impactScore: 98 },
 { key: "mama_fatma_home", location: { lat: -1.209201349185106, lng: 36.898414969228945 }, name: "Mama Fatma Goodwill Childrens Home", cause: "Environment", capacity: 45, current: 45, impactScore: 92 },
@@ -70,6 +70,7 @@ const SiteMap: React.FC<SiteMapProps> = ({ onBack }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [mapCenter, setMapCenter] = useState({ lat: -1.227571545396187, lng: 36.888712784552965 });
+  const [selectedSite, setSelectedSite] = useState<Poi | null>(null);
 
   const filteredPois = useMemo(() => {
     if (!searchQuery) return [];
@@ -82,6 +83,7 @@ const SiteMap: React.FC<SiteMapProps> = ({ onBack }) => {
   const handleSelectPoi = (poi: Poi) => {
     setMapCenter(poi.location);
     setSearchQuery(poi.name);
+    setSelectedSite(poi);
     setShowDropdown(false);
   };
 
@@ -123,6 +125,7 @@ const SiteMap: React.FC<SiteMapProps> = ({ onBack }) => {
                         onChange={(e) => {
                             setSearchQuery(e.target.value);
                             setShowDropdown(true);
+                    setSelectedSite(null);
                         }}
                         onFocus={() => setShowDropdown(true)}
                         />
@@ -170,7 +173,7 @@ const SiteMap: React.FC<SiteMapProps> = ({ onBack }) => {
                         console.log('camera changed:', ev.detail.center, 'zoom:', ev.detail.zoom)
                         }
                     >
-                        <PoiMarkers pois={locations} />
+                        <PoiMarkers pois={selectedSite ? [selectedSite] : locations} />
                     </Map>
                     </div>
                 </APIProvider>
@@ -185,11 +188,11 @@ const SiteMap: React.FC<SiteMapProps> = ({ onBack }) => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {locations.map(poi => (
+                    {(selectedSite ? [selectedSite] : (searchQuery ? filteredPois : locations)).map(poi => (
                         <div 
                         key={poi.key}
                         className="p-6 rounded-2xl border border-brand-100 hover:border-brand-300 hover:shadow-md transition-all group cursor-pointer"
-                        onClick={() => setMapCenter(poi.location)}
+                        onClick={() => navigate(`/site/${poi.key}`)}
                         >
                         <div className="flex justify-between items-start mb-4">
                             <span className="text-[10px] font-bold uppercase tracking-widest text-brand-400 px-2 py-1 bg-brand-50 rounded-full">

@@ -6,6 +6,7 @@ import SignUp from "./pages/SignUp"
 import SiteMap from "./pages/SiteMap"
 import RegisterSite from "./pages/RegisterSite"
 import About from "./pages/About"
+import SiteDashboard from "./pages/SiteDashboard"
 
 export default function App() {
     return (
@@ -17,6 +18,7 @@ export default function App() {
             <Route path="/sites" element={<SiteMap onBack={function (): void {
                 throw new Error("Function not implemented.")
             } }/>}/>
+            <Route path="/site/:siteKey" element={<SiteDashboard />} />
             <Route path="/registersite" element={<RegisterSite/>}/>
             <Route path="/about" element={<About/>}/>
         </Routes>

@@ -200,8 +200,9 @@ export default function SiteDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-brand-50 pt-10 pb-20 px-6">
+      <>
       <Navbar />
+      <div className="min-h-screen bg-brand-50 pt-10 pb-20 px-6">
 
       <div className="max-w-6xl mx-auto pt-20">
         {/* Map + single pin */}
@@ -331,9 +332,9 @@ export default function SiteDashboard() {
           </div>
         </div>
       </div>
-
-      <Footer />
     </div>
+    <Footer />
+    </>
   );
 }
 

@@ -7,6 +7,11 @@ import SiteMap from "./pages/SiteMap"
 import RegisterSite from "./pages/RegisterSite"
 import About from "./pages/About"
 import SiteDashboard from "./pages/SiteDashboard"
+import AdminDashboard from "./pages/AdminDashboard"
+import RequireRole from "./components/RequireRole"
+import RoleRedirect from "./components/RoleRedirect"
+import RequireApprovedSupervisor from "./components/RequireApprovedSupervisor"
+import SupervisorApproval from "./pages/SupervisorApproval"
 
 export default function App() {
     return (
@@ -14,12 +19,36 @@ export default function App() {
             <Route path="/" element={<Dashboard />}/>
             <Route path="/signup" element={<SignUp/>}/>
             <Route path="/signin" element={<SignIn/>}/>
-            <Route path="/supervisor" element={<SupervisorDashboard/>}/>
+            <Route path="/redirect" element={<RoleRedirect />} />
+            <Route path="/supervisor-approval" element={<SupervisorApproval />} />
+            <Route
+              path="/supervisor"
+              element={
+                <RequireRole allowed={['supervisor', 'admin']}>
+                  <SupervisorDashboard />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <RequireRole allowed={['admin']}>
+                  <AdminDashboard />
+                </RequireRole>
+              }
+            />
             <Route path="/sites" element={<SiteMap onBack={function (): void {
                 throw new Error("Function not implemented.")
             } }/>}/>
             <Route path="/site/:siteKey" element={<SiteDashboard />} />
-            <Route path="/registersite" element={<RegisterSite/>}/>
+            <Route
+              path="/registersite"
+              element={
+                <RequireApprovedSupervisor>
+                  <RegisterSite />
+                </RequireApprovedSupervisor>
+              }
+            />
             <Route path="/about" element={<About/>}/>
         </Routes>
     )

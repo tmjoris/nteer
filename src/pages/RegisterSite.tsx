@@ -17,6 +17,9 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import Navbar from "../components/Navbar"
 import Footer from '../components/Footer';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { firestore } from '../lib/firebase';
+import { useAuth } from '../lib/auth';
 
 const CAUSES = [
   'Environment',
@@ -29,6 +32,7 @@ const CAUSES = [
 
 const RegisterSite: React.FC = () => {
   const navigate = useNavigate();
+  const { user, profile } = useAuth();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     orgName: '',
@@ -43,6 +47,8 @@ const RegisterSite: React.FC = () => {
   });
 
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string>('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -52,12 +58,34 @@ const RegisterSite: React.FC = () => {
   const nextStep = () => setStep(prev => prev + 1);
   const prevStep = () => setStep(prev => prev - 1);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate API call
-    setTimeout(() => {
+    if (!user) return;
+
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      await addDoc(collection(firestore, 'sites'), {
+        name: formData.orgName,
+        supervisorName: formData.supervisorName || profile?.fullName || '',
+        email: formData.email || profile?.email || user.email || '',
+        phone: formData.phone || profile?.phoneNumber || '',
+        location: formData.location,
+        cause: formData.cause,
+        description: formData.description,
+        capacity: Number(formData.capacity) || 0,
+        imageUrl: formData.imageUrl || '',
+        status: 'pending',
+        supervisorAuthUid: user.uid,
+        createdOn: serverTimestamp(),
+      });
       setIsSubmitted(true);
-    }, 1000);
+    } catch (e) {
+      setSubmitError('Failed to submit. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isSubmitted) {
@@ -73,7 +101,7 @@ const RegisterSite: React.FC = () => {
           </div>
           <h2 className="text-3xl font-serif font-bold text-brand-950 mb-4">Site Registered!</h2>
           <p className="text-brand-500 mb-8 leading-relaxed">
-            Thank you for joining Nteer. Our team will review your application and get back to you within 24 hours.
+            Thanks! Your site is now pending admin approval. You'll be able to share it once approved.
           </p>
           <button 
             onClick={() => navigate('/')}
@@ -335,23 +363,25 @@ const RegisterSite: React.FC = () => {
                     Back
                   </button>
                 )}
-                {step < 3 ? (
-                  <button 
-                    type="button"
-                    onClick={nextStep}
-                    className="flex-[2] py-4 bg-brand-950 text-white rounded-2xl font-bold hover:bg-brand-800 transition-all flex items-center justify-center gap-2 group"
-                  >
-                    Continue <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </button>
-                ) : (
-                  <button 
-                    type="submit"
-                    className="flex-[2] py-4 bg-brand-950 text-white rounded-2xl font-bold hover:bg-brand-800 transition-all"
-                  >
-                    Submit Registration
-                  </button>
-                )}
+              {step < 3 ? (
+                <button 
+                  type="button"
+                  onClick={nextStep}
+                  className="flex-[2] py-4 bg-brand-950 text-white rounded-2xl font-bold hover:bg-brand-800 transition-all flex items-center justify-center gap-2 group"
+                >
+                  Continue <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+              ) : (
+                <button 
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-[2] py-4 bg-brand-950 text-white rounded-2xl font-bold hover:bg-brand-800 transition-all"
+                >
+                  {isSubmitting ? 'Submitting…' : 'Submit Registration'}
+                </button>
+              )}
               </div>
+              {submitError ? <div className="mt-4 text-sm text-red-700">{submitError}</div> : null}
             </form>
           </div>
         </div>

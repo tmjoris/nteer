@@ -4,6 +4,7 @@ import { Mail, Lock, Eye, EyeOff, User, ArrowRight, Github, Phone, LocateIcon, L
 import { Link, useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { normalizeRole } from '../lib/rbac';
 import { firebaseAuth, firestore } from '../lib/firebase';
 
 const SignUp = () => {
@@ -52,7 +53,9 @@ const SignUp = () => {
         email: formData.email,
         fullName: formData.fullName,
         phoneNumber: formData.phoneNumber,
-        userRole: formData.userRole,
+        userRole: normalizeRole(formData.userRole) ?? 'volunteer',
+        supervisorStatus:
+          normalizeRole(formData.userRole) === 'supervisor' ? 'pending' : 'approved',
         city: formData.city,
         createdOn: serverTimestamp(),
         authUid: userCredential.user.uid,
@@ -201,7 +204,8 @@ const SignUp = () => {
               className="w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
             >
               <option value="volunteer">Volunteer</option>
-              <option value="supervisor">Supervisor</option>
+              <option value="supervisor">Site Supervisor</option>
+              <option value="admin">Admin</option>
             </select>
           </div>
           <p className="text-xs text-gray-500">Selected: {formData.userRole}</p>

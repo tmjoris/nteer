@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { firebaseAuth } from '../lib/firebase';
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [showPassword, setShowPassword] = useState(false); 
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -15,6 +16,23 @@ const SignIn = () => {
     password:""
   });
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const state = location.state as any;
+    if (typeof state?.error === 'string' && state.error.length > 0) {
+      setError(state.error);
+    }
+
+    try {
+      const stored = sessionStorage.getItem('auth_error');
+      if (stored) {
+        setError(stored);
+        sessionStorage.removeItem('auth_error');
+      }
+    } catch {
+      // ignore
+    }
+  }, [location.state]);
 
   const handleChange = (e) =>{
     const {name, value} = e.target;
@@ -27,7 +45,9 @@ const SignIn = () => {
     
     try {
       await signInWithEmailAndPassword(firebaseAuth, formData.email, formData.password);
-      navigate("/sites")
+      const state = location.state as any;
+      const from = typeof state?.from === 'string' ? state.from : '/redirect';
+      navigate(from, { replace: true });
     } catch (error) {
       console.error("Error during signing in: ", error);
       setError("Something went wrong. Please try again.");

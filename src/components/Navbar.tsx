@@ -1,46 +1,21 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Menu, X } from "lucide-react"
 import { useNavigate, Link } from "react-router-dom"
-import { onAuthStateChanged, signOut, type User } from "firebase/auth"
-import { collection, getDocs, limit, query, where } from "firebase/firestore"
-import { firebaseAuth, firestore } from "../lib/firebase"
+import { signOut } from "firebase/auth"
+import { firebaseAuth } from "../lib/firebase"
+import { useAuth } from "../lib/auth"
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const navigate = useNavigate()
-  const [user, setUser] = useState<User | null>(firebaseAuth.currentUser)
-  const [displayName, setDisplayName] = useState<string>("")
+  const { user, profile, role } = useAuth()
+  const homePath = role === "admin" ? "/admin" : "/"
+  const displayName = profile?.fullName ?? ""
   const firstName =
     displayName?.trim().split(" ")[0] ||
     user?.displayName?.trim().split(" ")[0] ||
     user?.email?.split("@")[0] ||
     ""
-
-  useEffect(() => {
-    const unsub = onAuthStateChanged(firebaseAuth, async (nextUser) => {
-      setUser(nextUser)
-      setDisplayName("")
-      if (!nextUser) return
-
-      // Prefer auth profile name if present; otherwise look up Firestore "user" doc.
-      if (nextUser.displayName) {
-        setDisplayName(nextUser.displayName)
-        return
-      }
-
-      try {
-        const usersRef = collection(firestore, "user")
-        const q = query(usersRef, where("authUid", "==", nextUser.uid), limit(1))
-        const snap = await getDocs(q)
-        const doc = snap.docs[0]
-        const name = doc?.data()?.fullName
-        if (typeof name === "string") setDisplayName(name)
-      } catch {
-        // ignore: navbar can still show email fallback
-      }
-    })
-    return () => unsub()
-  }, [])
 
   const handleLogout = async () => {
     await signOut(firebaseAuth)
@@ -53,7 +28,7 @@ export default function Navbar() {
         
         {/* Left */}
         <div className="flex items-center gap-8">
-            <Link to="/" className="hover:text-yellow transition-colors">
+            <Link to={homePath} className="hover:text-yellow transition-colors">
             <h1 className="text-2xl font-serif font-bold tracking-tight">
               Nteer
             </h1>
@@ -61,13 +36,25 @@ export default function Navbar() {
 
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-brand-300">
 
-            <Link to="/sites" className="hover:text-white transition-colors">
-              Find Sites
-            </Link>
+            {role === 'admin' ? null : (
+              <>
+                <Link to="/sites" className="hover:text-white transition-colors">
+                  Find Sites
+                </Link>
 
-            <Link to="/registersite" className="hover:text-white transition-colors">
-              List Your Site
-            </Link>
+                {role === 'supervisor' ? (
+                  <Link to="/registersite" className="hover:text-white transition-colors">
+                    List Your Site
+                  </Link>
+                ) : null}
+
+                {role === 'supervisor' ? (
+                  <Link to="/supervisor" className="hover:text-white transition-colors">
+                    Supervisor
+                  </Link>
+                ) : null}
+              </>
+            )}
 
             <Link to="/about" className="hover:text-white transition-colors">
               About

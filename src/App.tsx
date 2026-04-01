@@ -54,6 +54,24 @@ export default function App() {
                 </RequireRole>
               }
             />
+            <Route path="/redirect" element={<RoleRedirect />} />
+            <Route path="/supervisor-approval" element={<SupervisorApproval />} />
+            <Route
+              path="/supervisor"
+              element={
+                <RequireRole allowed={['supervisor', 'admin']}>
+                  <SupervisorDashboard />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <RequireRole allowed={['admin']}>
+                  <AdminDashboard />
+                </RequireRole>
+              }
+            />
             <Route path="/sites" element={<SiteMap onBack={function (): void {
                 throw new Error("Function not implemented.")
             } }/>}/>
@@ -66,7 +84,16 @@ export default function App() {
                 </RequireApprovedSupervisor>
               }
             />
+            <Route
+              path="/registersite"
+              element={
+                <RequireApprovedSupervisor>
+                  <RegisterSite />
+                </RequireApprovedSupervisor>
+              }
+            />
             <Route path="/about" element={<About/>}/>
         </Routes>
     )
 }
+

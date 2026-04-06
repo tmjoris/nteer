@@ -8,12 +8,12 @@ import { firebaseAuth } from '../lib/firebase';
 const SignIn = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [showPassword, setShowPassword] = useState(false); 
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    email:"",
-    password:""
+    email: "",
+    password: ""
   });
   const [error, setError] = useState("");
 
@@ -34,15 +34,15 @@ const SignIn = () => {
     }
   }, [location.state]);
 
-  const handleChange = (e) =>{
-    const {name, value} = e.target;
-    setFormData({...formData, [name]:value});
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
       await signInWithEmailAndPassword(firebaseAuth, formData.email, formData.password);
       const state = location.state as any;
@@ -57,171 +57,146 @@ const SignIn = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8"
-      >
-        {/* Header */}
-        <div className="text-center mb-8">
-          <motion.h1 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="text-3xl font-bold text-gray-900 mb-2"
-          >
-            Welcome Back
-          </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="text-gray-600"
-          >
-            Log in to your NTeer account
-          </motion.p>
+    <div className="min-h-screen flex selection:bg-brand-200">
+      {/* Left side */}
+      <div className="hidden lg:flex lg:w-1/2 p-12 lg:p-24 bg-brand-950 flex-col justify-between text-white transition-all duration-700">
+        <div>
+          <Link to="/" className="text-2xl font-serif font-bold italic text-brand-50">NTeer.</Link>
         </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Email Field */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Email Address
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="email"
-                name='email'
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Password Field */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                name='password'
-                value={formData.password}
-                onChange={handleChange}
-                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Remember Me & Forgot Password */}
-          <div className="flex items-center justify-between">
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
-              />
-              <span className="text-sm text-gray-600">Remember me</span>
-            </label>
-            <Link 
-              to="/forgot-password" 
-              className="text-sm text-orange-600 hover:text-orange-800 hover:underline transition-colors"
-            >
-              Forgot password?
-            </Link>
-          </div>
-          {error && (
-              <p className="text-red-500 text-sm mt-2">
-                {error}
-              </p>
-            )}
-          {/* Login Button */}
-          <motion.button
-            type="submit"
-            disabled={isLoading}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full bg-gradient-to-r from-orange-500 to-amber-600 text-white py-3 rounded-lg font-semibold text-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-          >
-            {isLoading ? (
-              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <>
-                <span>Login</span>
-                <ArrowRight className="w-5 h-5" />
-              </>
-            )}
-          </motion.button>
-
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-gray-500">Or continue with</span>
-            </div>
-          </div>
-
-          {/* Social Login */}
-          <div className="grid grid-cols-2 gap-4">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="button"
-              className="flex items-center justify-center space-x-2 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path
-                  fill="currentColor"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                />
-              </svg>
-              <span className="text-sm font-medium">Google</span>
-            </motion.button>
-          </div>
-
-          {/* Sign Up Link */}
-          <p className="text-center text-gray-600 mt-6">
-            Don't have an account?{' '}
-            <Link 
-              to="/signup" 
-              className="text-orange-600 hover:text-orange-800 font-semibold hover:underline transition-colors"
-            >
-              Sign up
-            </Link>
+        <div className="max-w-xl">
+          <h2 className="text-6xl font-serif font-bold leading-tight mb-6 mt-12">
+            Welcome back to your <span className="serif-italic">impact</span>.
+          </h2>
+          <p className="text-xl text-brand-100 opacity-80 leading-relaxed max-w-lg mb-8">
+            Pick up where you left off. The community is still counting on you.
           </p>
-        </form>
-      </motion.div>
+        </div>
+        <div className="text-sm font-medium text-brand-400">
+          © {new Date().getFullYear()} NTeer Platform
+        </div>
+      </div>
+
+      {/* Right side */}
+      <div className="relative flex flex-col justify-center w-full lg:w-1/2 bg-brand-50 p-8 lg:p-24 transition-all duration-700">
+        <Link to="/" className="absolute top-8 left-8 lg:hidden text-2xl font-serif font-bold italic text-brand-950">NTeer.</Link>
+
+        <div className="max-w-md w-full mx-auto">
+          {/* Header */}
+          <div className="mb-12">
+            <h1 className="text-4xl font-serif font-bold text-brand-950 mb-3">Log in</h1>
+            <p className="text-brand-600">Enter your credentials to access your account</p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Email Field */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-brand-900 uppercase tracking-widest">
+                Email Address
+              </label>
+              <div className="relative">
+                <input
+                  type="email"
+                  name='email'
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full pb-3 border-b-2 border-brand-200 bg-transparent focus:border-brand-600 outline-none transition-all text-lg"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Password Field */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-end mb-2">
+                <label className="block text-xs font-bold text-brand-900 uppercase tracking-widest">
+                  Password
+                </label>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-bold text-brand-600 hover:text-brand-950 transition-colors uppercase tracking-widest"
+                >
+                  Forgot?
+                </Link>
+              </div>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name='password'
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="w-full pb-3 pr-12 border-b-2 border-brand-200 bg-transparent focus:border-brand-600 outline-none transition-all text-lg"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 text-brand-400 hover:text-brand-600 mb-3"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Remember Me */}
+            <div className="flex items-center pt-2">
+              <label className="flex items-center space-x-3 cursor-pointer group">
+                <div className="relative flex items-center justify-center">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="peer w-5 h-5 appearance-none border-2 border-brand-300 rounded cursor-pointer checked:bg-brand-950 checked:border-brand-950 transition-colors"
+                  />
+                  <div className="absolute text-brand-50 pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+                <span className="text-sm font-bold text-brand-700 group-hover:text-brand-950 transition-colors">Remember me</span>
+              </label>
+            </div>
+
+            {error && (
+              <div className="p-4 bg-red-50 text-red-600 text-sm font-medium rounded-xl border border-red-100">
+                {error}
+              </div>
+            )}
+
+            {/* Login Button */}
+            <div className="pt-4">
+              <motion.button
+                type="submit"
+                disabled={isLoading}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-brand-950 text-white px-8 py-5 rounded-xl font-bold hover:bg-brand-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3 shadow-md hover:shadow-lg"
+              >
+                {isLoading ? (
+                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span className="text-lg">Access Account</span>
+                    <ArrowRight className="w-5 h-5" />
+                  </>
+                )}
+              </motion.button>
+            </div>
+
+            {/* Sign Up Link */}
+            <p className="text-center text-brand-600 mt-8 font-medium">
+              Don't have an account?{' '}
+              <Link
+                to="/signup"
+                className="text-brand-950 font-bold hover:underline transition-colors"
+              >
+                Join now
+              </Link>
+            </p>
+          </form>
+        </div>
+      </div>
     </div>
   );
 };

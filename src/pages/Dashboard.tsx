@@ -145,6 +145,7 @@ export default function Dashboard() {
   const handleSelectPoi = (poi: Poi) => {
     setSearchQuery(poi.name);
     setShowDropdown(false);
+    navigate(`/site/${poi.key}`);
   };
   
   const handleSignUp = () => {
@@ -194,7 +195,15 @@ export default function Dashboard() {
                   onFocus={() => setShowDropdown(true)}
                 />
               </div>
-              <button className="bg-brand-950 text-white px-8 py-4 rounded-xl font-bold hover:bg-brand-800 transition-all">
+              <button 
+                onClick={() => {
+                  if (filteredPois.length > 0) {
+                    navigate(`/site/${filteredPois[0].key}`);
+                  } else if (filteredSites.length > 0) {
+                    navigate(`/site/${filteredSites[0].id}`);
+                  }
+                }}
+                className="bg-brand-950 text-white px-8 py-4 rounded-xl font-bold hover:bg-brand-800 transition-all">
                 Search
               </button>
             </div>

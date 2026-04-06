@@ -1,14 +1,26 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Menu, X } from "lucide-react"
 import { useNavigate, Link } from "react-router-dom"
 import { signOut } from "firebase/auth"
-import { firebaseAuth } from "../lib/firebase"
+import { collection, query, where, getDocs } from "firebase/firestore"
+import { firebaseAuth, firestore } from "../lib/firebase"
 import { useAuth } from "../lib/auth"
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [hasSite, setHasSite] = useState(false)
   const navigate = useNavigate()
   const { user, profile, role } = useAuth()
+
+  useEffect(() => {
+    if (user && role === "supervisor") {
+      const q = query(collection(firestore, "sites"), where("supervisorAuthUid", "==", user.uid));
+      getDocs(q).then(snap => setHasSite(!snap.empty)).catch(console.error);
+    } else {
+      setHasSite(false);
+    }
+  }, [user, role])
+
   const homePath = role === "admin" ? "/admin" : "/"
   const displayName = profile?.fullName ?? ""
   const firstName =
@@ -42,15 +54,15 @@ export default function Navbar() {
                   Find Sites
                 </Link>
 
-                {role === 'supervisor' ? (
+                {role === 'supervisor' && !hasSite ? (
                   <Link to="/registersite" className="hover:text-white transition-colors">
                     List Your Site
                   </Link>
                 ) : null}
 
-                {role === 'supervisor' ? (
+                {role === 'supervisor' && hasSite ? (
                   <Link to="/supervisor" className="hover:text-white transition-colors">
-                    Supervisor
+                    My Site
                   </Link>
                 ) : null}
               </>

@@ -23,7 +23,13 @@ export default function RoleRedirect() {
       return;
     }
 
-    navigate(role === 'admin' ? '/admin' : '/', { replace: true });
+    if (role === 'admin') {
+      navigate('/admin', { replace: true });
+    } else if (role === 'supervisor') {
+      navigate('/supervisor', { replace: true });
+    } else {
+      navigate('/', { replace: true });
+    }
   }, [loading, user, role, navigate, location]);
 
   return (

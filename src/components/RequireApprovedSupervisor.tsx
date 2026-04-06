@@ -18,16 +18,16 @@ export default function RequireApprovedSupervisor(props: { children: ReactNode }
     return <Navigate to="/signin" replace state={{ from: location.pathname + location.search }} />;
   }
 
-  if (role === 'admin') return <>{props.children}</>;
-
-  if (role !== 'supervisor') {
-    return <Navigate to="/sites" replace />;
-  }
-
-  if (profile?.supervisorStatus === 'approved') {
+ // Supervisor logic
+if (role === "supervisor") {
+  if (profile?.supervisorStatus === "approved") {
     return <>{props.children}</>;
+  } else {
+    return <Navigate to="/supervisor-approval" replace />;
   }
+}
 
-  return <Navigate to="/supervisor-approval" replace />;
+// Non-supervisor users trying to access supervisor/admin routes
+return <Navigate to="/signin" replace />;
 }
 

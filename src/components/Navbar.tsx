@@ -14,7 +14,7 @@ export default function Navbar() {
 
   useEffect(() => {
     if (user && role === "supervisor") {
-      const q = query(collection(firestore, "sites"), where("supervisorAuthUid", "==", user.uid));
+      const q = query(collection(firestore, "locations"), where("supervisorAuthUid", "==", user.uid));
       getDocs(q).then(snap => setHasSite(!snap.empty)).catch(console.error);
     } else {
       setHasSite(false);

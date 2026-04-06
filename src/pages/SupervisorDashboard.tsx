@@ -51,7 +51,7 @@ export default function SupervisorDashboard() {
 
     const fetchSite = async () => {
       try {
-        const q = query(collection(firestore, "sites"), where("supervisorAuthUid", "==", user.uid));
+        const q = query(collection(firestore, "locations"), where("supervisorAuthUid", "==", user.uid));
         const snap = await getDocs(q);
         if (!snap.empty) {
           const siteDoc = snap.docs[0];
@@ -69,7 +69,7 @@ export default function SupervisorDashboard() {
   // Load volunteers
   useEffect(() => {
     if (!site?.id) return;
-    const unsub = onSnapshot(collection(firestore, `sites/${site.id}/volunteers`), (snap) => {
+    const unsub = onSnapshot(collection(firestore, `locations/${site.id}/volunteers`), (snap) => {
       const vols = snap.docs.map(d => ({ id: d.id, ...d.data() } as Volunteer));
       setVolunteers(vols.sort((a,b) => new Date(b.registeredAt).valueOf() - new Date(a.registeredAt).valueOf()));
     });
@@ -82,7 +82,7 @@ export default function SupervisorDashboard() {
     // Optimistic Update
     setSite({ ...site, capacity: newCap });
     try {
-      await updateDoc(doc(firestore, "sites", site.id), { capacity: newCap });
+      await updateDoc(doc(firestore, "locations", site.id), { capacity: newCap });
     } catch (err) {
       console.error(err);
     }
@@ -94,7 +94,7 @@ export default function SupervisorDashboard() {
     
     try {
       // It auto syncs via onSnapshot, so we just write
-      await addDoc(collection(firestore, `sites/${site.id}/volunteers`), {
+      await addDoc(collection(firestore, `locations/${site.id}/volunteers`), {
         name: newVolunteerName,
         email: newVolunteerEmail,
         role: 'Registered Volunteer',
@@ -111,7 +111,7 @@ export default function SupervisorDashboard() {
   const handleCheckOut = async (id: string) => {
     if (!site) return;
     try {
-      await deleteDoc(doc(firestore, `sites/${site.id}/volunteers`, id));
+      await deleteDoc(doc(firestore, `locations/${site.id}/volunteers`, id));
     } catch (error) {
       console.error(error);
     }

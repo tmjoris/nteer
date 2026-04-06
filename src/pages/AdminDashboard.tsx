@@ -138,7 +138,7 @@ export default function AdminDashboard() {
     setError('');
     setLoadingSites(true);
     try {
-      const sitesRef = collection(firestore, 'sites');
+      const sitesRef = collection(firestore, 'locations');
       const q = query(sitesRef, orderBy('createdOn', 'desc'));
       const snap = await getDocs(q);
       const next: SiteRow[] = snap.docs.map((d) => {
@@ -222,7 +222,7 @@ export default function AdminDashboard() {
     setSavingSiteId(siteId);
     setError('');
     try {
-      await updateDoc(fsDoc(firestore, 'sites', siteId), { status });
+      await updateDoc(fsDoc(firestore, 'locations', siteId), { status });
       setSites((prev) => prev.map((s) => (s.id === siteId ? { ...s, status } : s)));
     } catch (e) {
       setError('Failed to update site status. Check Firestore rules.');
@@ -242,7 +242,7 @@ export default function AdminDashboard() {
       for (const d of snap.docs) refs.push(d.ref);
     };
 
-    await collectDeletes('sites', 'supervisorAuthUid');
+    await collectDeletes('locations', 'supervisorAuthUid');
     await collectDeletes('reviews', 'userUid');
     await collectDeletes('siteVolunteers', 'authUid');
 
@@ -314,7 +314,7 @@ export default function AdminDashboard() {
     setError('');
     const t = toast.loading('Rejecting site submission…');
     try {
-      await updateDoc(fsDoc(firestore, 'sites', s.id), { status: 'rejected' });
+      await updateDoc(fsDoc(firestore, 'locations', s.id), { status: 'rejected' });
       setSites((prev) => prev.map((x) => (x.id === s.id ? { ...x, status: 'rejected' } : x)));
       toast.success('Site rejected.', { id: t });
     } catch {
@@ -352,7 +352,7 @@ export default function AdminDashboard() {
     setSavingSiteId(s.id);
     setError('');
     try {
-      await updateDoc(fsDoc(firestore, 'sites', s.id), { status: 'approved' });
+      await updateDoc(fsDoc(firestore, 'locations', s.id), { status: 'approved' });
       const supervisor = s.supervisorAuthUid ? usersByAuthUid.get(s.supervisorAuthUid) : undefined;
       const isSupervisorPending =
         supervisor?.userRole === 'supervisor' && (supervisor.supervisorStatus ?? 'pending') === 'pending';
@@ -383,7 +383,7 @@ export default function AdminDashboard() {
         setSites((prev) => prev.filter((x) => x.supervisorAuthUid !== authUid));
       } else {
         // If the supervisor profile doc isn't present, at least remove the site submission record.
-        await deleteDoc(fsDoc(firestore, 'sites', s.id));
+        await deleteDoc(fsDoc(firestore, 'locations', s.id));
         setSites((prev) => prev.filter((x) => x.id !== s.id));
       }
       toast.success('Submission rejected and user deleted.', { id: t });

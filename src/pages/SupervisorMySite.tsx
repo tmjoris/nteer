@@ -1,0 +1,582 @@
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { AlertCircle, CheckCircle2, MapPin, MessageSquare, Users } from 'lucide-react';
+import { toast } from 'sonner';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+import { useAuth } from '../lib/auth';
+import { cn } from '../lib/utils';
+import {
+  collection,
+  doc,
+  getDocs,
+  limit,
+  query,
+  updateDoc,
+  where,
+  type DocumentData,
+} from 'firebase/firestore';
+import { firestore } from '../lib/firebase';
+
+type LocationPoint = { lat: number; lng: number };
+type SiteDoc = {
+  id: string;
+  name?: string;
+  cause?: string;
+  description?: string;
+  capacity?: number;
+  current?: number;
+  location?: LocationPoint | string;
+  status?: 'pending' | 'approved' | 'rejected' | string;
+};
+
+type Review = {
+  id: string;
+  rating?: number;
+  comment?: string;
+  userFullName?: string;
+  createdOn?: { toDate: () => Date };
+};
+
+function formatLocation(loc: SiteDoc['location']): string {
+  if (!loc) return 'Not provided';
+  if (typeof loc === 'string') return loc;
+  const lat = typeof loc.lat === 'number' ? loc.lat : NaN;
+  const lng = typeof loc.lng === 'number' ? loc.lng : NaN;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return 'Not provided';
+  return `Lat ${lat.toFixed(4)}, Lng ${lng.toFixed(4)}`;
+}
+
+export default function SupervisorMySite() {
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+
+  const [sites, setSites] = useState<SiteDoc[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const [nameDraft, setNameDraft] = useState('');
+  const [descriptionDraft, setDescriptionDraft] = useState('');
+  const [capacityDraft, setCapacityDraft] = useState<number>(0);
+  const [currentDraft, setCurrentDraft] = useState<number>(0);
+  const [locationMode, setLocationMode] = useState<'coords' | 'text'>('coords');
+  const [locationLatDraft, setLocationLatDraft] = useState<number>(-1.2921);
+  const [locationLngDraft, setLocationLngDraft] = useState<number>(36.8219);
+  const [locationTextDraft, setLocationTextDraft] = useState<string>('');
+
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [showReviews, setShowReviews] = useState(false);
+
+  const primarySite = sites[0] ?? null;
+  const siteId = primarySite?.id ?? null;
+
+  const computed = useMemo(() => {
+    const capacity = Number(primarySite?.capacity ?? 0);
+    const current = Number(primarySite?.current ?? 0);
+    const safeCapacity = Number.isFinite(capacity) ? capacity : 0;
+    const safeCurrent = Number.isFinite(current) ? current : 0;
+    const pct = Math.min((safeCurrent / Math.max(safeCapacity, 1)) * 100, 100);
+    const isFull = safeCapacity > 0 ? safeCurrent >= safeCapacity : false;
+    return { capacity: safeCapacity, current: safeCurrent, pct, isFull };
+  }, [primarySite?.capacity, primarySite?.current]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      navigate('/signin', { replace: true });
+      return;
+    }
+
+    const load = async () => {
+      setLoading(true);
+      try {
+        const q = query(
+          collection(firestore, 'locations'),
+          where('supervisorAuthUid', '==', user.uid),
+          limit(5)
+        );
+        const snap = await getDocs(q);
+        const list: SiteDoc[] = snap.docs.map((d) => ({ id: d.id, ...(d.data() as DocumentData) } as any));
+        setSites(list);
+
+        const first = list[0];
+        if (first) {
+          setNameDraft(typeof first.name === 'string' ? first.name : '');
+          setDescriptionDraft(typeof first.description === 'string' ? first.description : '');
+          setCapacityDraft(Number(first.capacity ?? 0));
+          setCurrentDraft(Number(first.current ?? 0));
+
+          if (typeof first.location === 'string') {
+            setLocationMode('text');
+            setLocationTextDraft(first.location);
+          } else if (first.location && typeof first.location === 'object') {
+            const lat = Number((first.location as any).lat);
+            const lng = Number((first.location as any).lng);
+            setLocationMode('coords');
+            if (Number.isFinite(lat)) setLocationLatDraft(lat);
+            if (Number.isFinite(lng)) setLocationLngDraft(lng);
+            setLocationTextDraft('');
+          } else {
+            setLocationMode('coords');
+            setLocationTextDraft('');
+          }
+        } else {
+          setNameDraft('');
+          setDescriptionDraft('');
+          setCapacityDraft(0);
+          setCurrentDraft(0);
+          setLocationMode('coords');
+          setLocationTextDraft('');
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error('Failed to load your site.');
+        setSites([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, [authLoading, navigate, user]);
+
+  const loadReviews = async () => {
+    if (!siteId) return;
+    setLoadingReviews(true);
+    try {
+      const q = query(collection(firestore, 'reviews'), where('siteKey', '==', siteId));
+      const snap = await getDocs(q);
+      const list: Review[] = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+      list.sort((a, b) => {
+        const ta = a.createdOn?.toDate ? a.createdOn.toDate().getTime() : 0;
+        const tb = b.createdOn?.toDate ? b.createdOn.toDate().getTime() : 0;
+        return tb - ta;
+      });
+      setReviews(list);
+    } catch (err) {
+      console.error(err);
+      setReviews([]);
+      toast.error('Could not load reviews.');
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+
+  const toggleReviews = async () => {
+    const next = !showReviews;
+    setShowReviews(next);
+    if (next && siteId && reviews.length === 0) {
+      await loadReviews();
+    }
+  };
+
+  const saveSite = async () => {
+    if (!primarySite?.id) return;
+    const nextName = nameDraft.trim();
+    const nextDescription = descriptionDraft.trim();
+    const nextCapacity = Math.floor(Number(capacityDraft));
+    const nextCurrent = Math.floor(Number(currentDraft));
+
+    if (!nextName) {
+      toast.error('Site name is required.');
+      return;
+    }
+    if (!Number.isFinite(nextCapacity) || nextCapacity < 1) {
+      toast.error('Max volunteer limit must be 1 or more.');
+      return;
+    }
+    if (!Number.isFinite(nextCurrent) || nextCurrent < 0) {
+      toast.error('Current volunteer count must be 0 or more.');
+      return;
+    }
+    if (nextCurrent > nextCapacity) {
+      toast.error('Current volunteers cannot exceed the max limit.');
+      return;
+    }
+
+    let nextLocation: SiteDoc['location'] = primarySite.location;
+    if (locationMode === 'text') {
+      const t = locationTextDraft.trim();
+      if (!t) {
+        toast.error('Location is required.');
+        return;
+      }
+      nextLocation = t;
+    } else {
+      const lat = Number(locationLatDraft);
+      const lng = Number(locationLngDraft);
+      if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
+        toast.error('Latitude must be between -90 and 90.');
+        return;
+      }
+      if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
+        toast.error('Longitude must be between -180 and 180.');
+        return;
+      }
+      nextLocation = { lat, lng };
+    }
+
+    setSaving(true);
+    try {
+      await updateDoc(doc(firestore, 'locations', primarySite.id), {
+        name: nextName,
+        description: nextDescription,
+        location: nextLocation,
+        capacity: nextCapacity,
+        current: nextCurrent,
+      });
+      setSites((prev) =>
+        prev.map((s) =>
+          s.id === primarySite.id
+            ? {
+                ...s,
+                name: nextName,
+                description: nextDescription,
+                location: nextLocation,
+                capacity: nextCapacity,
+                current: nextCurrent,
+              }
+            : s
+        )
+      );
+      toast.success('Site updated.');
+    } catch (err) {
+      console.error(err);
+      toast.error('Update failed. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen bg-brand-50 flex items-center justify-center p-6">
+        <div className="text-brand-500 font-bold animate-pulse">Loading My Site...</div>
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  if (!primarySite) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-brand-50 pt-32 pb-20 px-6">
+          <div className="max-w-3xl mx-auto bg-white rounded-[2.5rem] border border-brand-100 shadow-sm p-10">
+            <div className="text-xs font-bold uppercase tracking-widest text-brand-400">My Site</div>
+            <h1 className="mt-3 text-3xl font-serif font-bold text-brand-950">No site registered yet</h1>
+            <p className="mt-4 text-brand-500 leading-relaxed">
+              You can manage only one site. Register your site to start receiving volunteers.
+            </p>
+            <div className="mt-8 flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => navigate('/registersite')}
+                className="px-6 py-3 bg-brand-950 text-white rounded-2xl font-bold hover:bg-brand-800 transition-colors"
+              >
+                Register My Site
+              </button>
+              <button
+                onClick={() => navigate('/')}
+                className="px-6 py-3 bg-brand-50 border border-brand-100 text-brand-950 rounded-2xl font-bold hover:bg-brand-100 transition-colors"
+              >
+                Back Home
+              </button>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-brand-50 pt-32 pb-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-start justify-between gap-6 flex-wrap">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-widest text-brand-400">Supervisor</div>
+              <h1 className="mt-2 text-4xl font-serif font-bold text-brand-950">My Site</h1>
+              <p className="mt-3 text-brand-500 leading-relaxed max-w-2xl">
+                View and manage your registered site. Only one site is allowed per supervisor.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link
+                to={`/site/${primarySite.id}`}
+                className="px-5 py-3 bg-white border border-brand-100 rounded-2xl font-bold text-brand-950 hover:bg-brand-50 transition-colors"
+              >
+                View Public Page
+              </Link>
+            </div>
+          </div>
+
+          {sites.length > 1 ? (
+            <div className="mt-6 p-5 rounded-2xl border border-amber-200 bg-amber-50 text-amber-900">
+              Multiple site records found for your account. Nteer supports only one site per supervisor; showing the
+              first one.
+            </div>
+          ) : null}
+
+          <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Site details */}
+            <section className="lg:col-span-2 bg-white rounded-[2.5rem] border border-brand-100 shadow-sm p-8">
+              <div className="flex items-start justify-between gap-6">
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-widest text-brand-400">Site</div>
+                  <h2 className="mt-2 text-3xl font-serif font-bold text-brand-950">
+                    {primarySite.name || 'Unnamed Site'}
+                  </h2>
+                  <div className="mt-3 flex flex-wrap items-center gap-3 text-sm font-semibold text-brand-600">
+                    <span className="inline-flex items-center gap-2">
+                      <MapPin className="w-4 h-4" />
+                      {formatLocation(primarySite.location)}
+                    </span>
+                    {primarySite.cause ? (
+                      <span className="px-3 py-1 rounded-full bg-brand-50 border border-brand-100 text-brand-700">
+                        {primarySite.cause}
+                      </span>
+                    ) : null}
+                    {primarySite.status ? (
+                      <span className="px-3 py-1 rounded-full bg-brand-50 border border-brand-100 text-brand-700">
+                        Status: {String(primarySite.status)}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div
+                  className={cn(
+                    'py-3 px-5 rounded-2xl text-sm font-bold inline-flex items-center gap-2 h-fit',
+                    computed.isFull ? 'bg-red-500/10 text-red-700' : 'bg-emerald-500/10 text-emerald-700'
+                  )}
+                >
+                  {computed.isFull ? (
+                    <>
+                      <AlertCircle className="w-4 h-4" /> Full
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" /> Available
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-6 rounded-2xl bg-brand-50 border border-brand-100">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-bold text-brand-800 inline-flex items-center gap-2">
+                      <Users className="w-4 h-4" /> Volunteers
+                    </div>
+                    <div className="text-2xl font-bold text-brand-950">
+                      {computed.current}{' '}
+                      <span className="text-base font-normal text-brand-500">/ {computed.capacity}</span>
+                    </div>
+                  </div>
+                  <div className="mt-4 w-full h-3 bg-brand-100 rounded-full overflow-hidden">
+                    <div
+                      className={computed.isFull ? 'h-full bg-red-500' : 'h-full bg-brand-950'}
+                      style={{ width: `${computed.pct}%` }}
+                    />
+                  </div>
+                  <p className="mt-3 text-sm text-brand-600">
+                    {computed.isFull ? 'Your site is currently full.' : 'Your site is accepting volunteers.'}
+                  </p>
+                </div>
+
+                <div className="p-6 rounded-2xl bg-white border border-brand-100">
+                  <div className="text-sm font-bold text-brand-800">Edit site</div>
+                  <div className="mt-4 space-y-4">
+                    <label className="block">
+                      <div className="text-[10px] font-bold uppercase tracking-widest text-brand-400 mb-2">
+                        Site Name
+                      </div>
+                      <input
+                        value={nameDraft}
+                        onChange={(e) => setNameDraft(e.target.value)}
+                        className="w-full p-3 bg-brand-50 border border-brand-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-950/10"
+                        placeholder="e.g., Happy Life Children's Home"
+                      />
+                    </label>
+
+                    <label className="block">
+                      <div className="text-[10px] font-bold uppercase tracking-widest text-brand-400 mb-2">
+                        Description
+                      </div>
+                      <textarea
+                        value={descriptionDraft}
+                        onChange={(e) => setDescriptionDraft(e.target.value)}
+                        rows={4}
+                        className="w-full p-3 bg-brand-50 border border-brand-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-950/10 resize-none"
+                        placeholder="Describe your site and what volunteers will do..."
+                      />
+                    </label>
+
+                    <div>
+                      <div className="text-[10px] font-bold uppercase tracking-widest text-brand-400 mb-2">
+                        Location
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 mb-3">
+                        <button
+                          type="button"
+                          onClick={() => setLocationMode('coords')}
+                          className={cn(
+                            'py-2.5 rounded-2xl border font-bold text-sm',
+                            locationMode === 'coords'
+                              ? 'bg-brand-950 text-white border-brand-950'
+                              : 'bg-white text-brand-900 border-brand-100 hover:bg-brand-50'
+                          )}
+                        >
+                          Coordinates
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setLocationMode('text')}
+                          className={cn(
+                            'py-2.5 rounded-2xl border font-bold text-sm',
+                            locationMode === 'text'
+                              ? 'bg-brand-950 text-white border-brand-950'
+                              : 'bg-white text-brand-900 border-brand-100 hover:bg-brand-50'
+                          )}
+                        >
+                          Text
+                        </button>
+                      </div>
+
+                      {locationMode === 'coords' ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <label className="block">
+                            <div className="text-[10px] font-bold uppercase tracking-widest text-brand-400 mb-2">
+                              Latitude
+                            </div>
+                            <input
+                              type="number"
+                              step="0.000001"
+                              value={locationLatDraft}
+                              onChange={(e) => setLocationLatDraft(Number(e.target.value))}
+                              className="w-full p-3 bg-brand-50 border border-brand-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-950/10"
+                            />
+                          </label>
+                          <label className="block">
+                            <div className="text-[10px] font-bold uppercase tracking-widest text-brand-400 mb-2">
+                              Longitude
+                            </div>
+                            <input
+                              type="number"
+                              step="0.000001"
+                              value={locationLngDraft}
+                              onChange={(e) => setLocationLngDraft(Number(e.target.value))}
+                              className="w-full p-3 bg-brand-50 border border-brand-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-950/10"
+                            />
+                          </label>
+                        </div>
+                      ) : (
+                        <input
+                          value={locationTextDraft}
+                          onChange={(e) => setLocationTextDraft(e.target.value)}
+                          className="w-full p-3 bg-brand-50 border border-brand-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-950/10"
+                          placeholder="e.g., Utawala, Nairobi"
+                        />
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <label className="block">
+                      <div className="text-[10px] font-bold uppercase tracking-widest text-brand-400 mb-2">
+                        Current Volunteers
+                      </div>
+                      <input
+                        type="number"
+                        min={0}
+                        max={Math.max(0, capacityDraft)}
+                        value={currentDraft}
+                        onChange={(e) => setCurrentDraft(Number(e.target.value))}
+                        className="w-full p-3 bg-brand-50 border border-brand-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-950/10"
+                      />
+                    </label>
+                    <label className="block">
+                      <div className="text-[10px] font-bold uppercase tracking-widest text-brand-400 mb-2">
+                        Max Volunteer Limit
+                      </div>
+                      <input
+                        type="number"
+                        min={1}
+                        value={capacityDraft}
+                        onChange={(e) => setCapacityDraft(Number(e.target.value))}
+                        className="w-full p-3 bg-brand-50 border border-brand-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-950/10"
+                      />
+                    </label>
+                  </div>
+                  </div>
+                  <button
+                    disabled={saving}
+                    onClick={saveSite}
+                    className="mt-5 w-full py-4 bg-brand-950 text-white rounded-2xl font-bold hover:bg-brand-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {saving ? 'Saving...' : 'Update Site'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-8 p-6 rounded-2xl bg-brand-50 border border-brand-100">
+                <div className="text-sm font-bold text-brand-800 mb-2">Tip</div>
+                <p className="text-brand-600 leading-relaxed">
+                  Use precise coordinates if you want volunteers to find your exact location on a map.
+                </p>
+              </div>
+            </section>
+
+            {/* Reviews */}
+            <aside className="bg-white rounded-[2.5rem] border border-brand-100 shadow-sm p-8">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-lg font-serif font-bold text-brand-950 inline-flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-brand-600" /> Feedback
+                </h3>
+                <button
+                  type="button"
+                  onClick={toggleReviews}
+                  className="text-sm font-bold text-brand-700 hover:text-brand-950"
+                >
+                  {showReviews ? 'Hide' : 'View'}
+                </button>
+              </div>
+
+              {!showReviews ? (
+                <p className="mt-4 text-sm text-brand-500 leading-relaxed">
+                  Reviews are written by volunteers. You can use them to improve your site experience.
+                </p>
+              ) : loadingReviews ? (
+                <p className="mt-4 text-sm text-brand-500">Loading reviews...</p>
+              ) : reviews.length === 0 ? (
+                <p className="mt-4 text-sm text-brand-500">No reviews yet.</p>
+              ) : (
+                <div className="mt-5 space-y-4">
+                  {reviews.slice(0, 6).map((r) => (
+                    <div key={r.id} className="p-4 rounded-2xl bg-brand-50 border border-brand-100">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="font-bold text-brand-950 text-sm">{r.userFullName ?? 'Volunteer'}</div>
+                        <div className="text-xs text-brand-400">
+                          {r.createdOn?.toDate ? r.createdOn.toDate().toLocaleDateString() : ''}
+                        </div>
+                      </div>
+                      <div className="mt-1 text-xs text-brand-500">
+                        Rating: {Number(r.rating ?? 0).toFixed(1)} / 5
+                      </div>
+                      {r.comment ? <p className="mt-2 text-sm text-brand-700">{r.comment}</p> : null}
+                    </div>
+                  ))}
+                  {reviews.length > 6 ? <p className="text-xs text-brand-400">Showing latest 6 reviews.</p> : null}
+                </div>
+              )}
+            </aside>
+          </div>
+        </div>
+      </div>
+      <Footer />
+    </>
+  );
+}

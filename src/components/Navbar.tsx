@@ -54,6 +54,18 @@ export default function Navbar() {
                   Find Sites
                 </Link>
 
+                {role === 'volunteer' ? (
+                  <Link to="/volunteer" className="hover:text-white transition-colors">
+                    Dashboard
+                  </Link>
+                ) : null}
+
+                {role === 'volunteer' ? (
+                  <Link to="/notifications" className="hover:text-white transition-colors">
+                    Notifications
+                  </Link>
+                ) : null}
+
                 {role === 'supervisor' && !hasSite ? (
                   <Link to="/registersite" className="hover:text-white transition-colors">
                     List Your Site

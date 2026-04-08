@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, MapPin, Send, Star, Users } from 'lucide-react';
 import Navbar from '../components/Navbar';
@@ -16,7 +16,6 @@ import {
   serverTimestamp,
   where,
 } from 'firebase/firestore';
-import { locations } from './SiteMap';
 
 type Review = {
   id: string;
@@ -26,6 +25,10 @@ type Review = {
   userFullName?: string;
   createdOn?: { toDate: () => Date };
 };
+
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
 
 export default function SiteDetail() {
   const { siteKey } = useParams<{ siteKey: string }>();
@@ -40,11 +43,6 @@ export default function SiteDetail() {
   const [rating, setRating] = useState<number>(5);
   const [comment, setComment] = useState<string>('');
   const [loading, setLoading] = useState(false);
-
-  const poi = useMemo(() => {
-    if (!siteKey) return null;
-    return locations.find((p) => p.key === siteKey) || null;
-  }, [siteKey]);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(firebaseAuth, (nextUser) => {
@@ -96,31 +94,53 @@ export default function SiteDetail() {
       const usersQ = query(collection(firestore, 'user'), where('authUid', '==', user.uid), limit(1));
       const usersSnap = await getDocs(usersQ);
       const profileDoc = usersSnap.docs[0];
-      const profile = (profileDoc?.data() ?? {}) as any;
+      const profile = (profileDoc?.data() ?? {}) as Record<string, unknown>;
       const fullName = typeof profile.fullName === 'string' ? profile.fullName : undefined;
-      const userRole = typeof profile.userRole === 'string' ? profile.userRole : undefined;
-      setUserProfile({ fullName, userRole });
+      const userRole = typeof profile.userRole === 'string' ? profile.userRole.toLowerCase() : undefined;
+      setUserProfile({ fullName, userRole: profile.userRole as string | undefined });
 
-      setCanAddReview(userRole === 'volunteer');
+      if (userRole !== 'volunteer') {
+        setCanAddReview(false);
+        return;
+      }
+
+      const authEmail = user.email ? normalizeEmail(user.email) : '';
+      if (!authEmail) {
+        setCanAddReview(false);
+        return;
+      }
+
+      try {
+        const rosterQ = query(
+          collection(firestore, 'volunteers'),
+          where('email', '==', authEmail),
+          where('siteId', '==', siteKey),
+          limit(1)
+        );
+        const rosterSnap = await getDocs(rosterQ);
+        setCanAddReview(!rosterSnap.empty);
+      } catch {
+        setCanAddReview(false);
+      }
     };
 
     checkEligibility().catch(() => setCanAddReview(false));
   }, [siteKey, user]);
 
-  const siteName = (siteData?.name as string | undefined) || poi?.name || 'Site';
-  const siteCause = (siteData?.cause as string | undefined) || poi?.cause || '';
+  const siteName = (siteData?.name as string | undefined) || 'Site';
+  const siteCause = (siteData?.cause as string | undefined) || '';
   const siteDescription =
     (siteData?.description as string | undefined) ||
     (siteData?.siteDescription as string | undefined) ||
     '';
 
-  const capacity = Number(siteData?.capacity ?? poi?.capacity ?? 0);
-  const current = Number(siteData?.current ?? poi?.current ?? 0);
+  const capacity = Number(siteData?.capacity ?? 0);
+  const current = Number(siteData?.current ?? 0);
   const pct = Math.min((current / Math.max(capacity, 1)) * 100, 100);
   const isFull = capacity > 0 ? current >= capacity : false;
 
   const locationLabel = (() => {
-    const loc = siteData?.location ?? poi?.location;
+    const loc = siteData?.location;
     if (!loc) return 'Not provided';
     if (typeof loc === 'string') return loc;
     const lat = typeof loc.lat === 'number' ? loc.lat : NaN;
@@ -281,7 +301,7 @@ export default function SiteDetail() {
                 </div>
               ) : !canAddReview ? (
                 <div className="p-6 rounded-2xl border border-brand-100 bg-brand-50 text-brand-400">
-                  Only volunteer accounts can add reviews.
+                  Only volunteers registered for this site (same email as on the supervisor roster) can add a review.
                 </div>
               ) : (
                 <form onSubmit={handleAddReview} className="space-y-4">

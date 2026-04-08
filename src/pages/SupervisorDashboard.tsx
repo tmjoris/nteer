@@ -18,8 +18,24 @@ import { cn } from '../lib/utils';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useAuth } from '../lib/auth';
-import { collection, query, where, getDocs, updateDoc, doc, onSnapshot, addDoc, deleteDoc } from 'firebase/firestore';
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  updateDoc,
+  doc,
+  onSnapshot,
+  addDoc,
+  deleteDoc,
+  getDoc,
+  serverTimestamp,
+} from 'firebase/firestore';
 import { firestore } from '../lib/firebase';
+
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
 
 type Volunteer = {
   id: string;
@@ -27,6 +43,7 @@ type Volunteer = {
   email: string;
   role: string;
   registeredAt: string;
+  volunteersDocId?: string;
 };
 
 export default function SupervisorDashboard() {
@@ -91,14 +108,38 @@ export default function SupervisorDashboard() {
   const handleAddVolunteer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!site || !newVolunteerName.trim() || !newVolunteerEmail.trim() || volunteers.length >= (site.capacity || 0)) return;
-    
+
+    const emailNorm = normalizeEmail(newVolunteerEmail);
+
     try {
-      // It auto syncs via onSnapshot, so we just write
+      const dupQ = query(
+        collection(firestore, 'volunteers'),
+        where('siteId', '==', site.id),
+        where('email', '==', emailNorm)
+      );
+      const dupSnap = await getDocs(dupQ);
+      if (!dupSnap.empty) {
+        window.alert('This email is already registered for this site.');
+        return;
+      }
+
+      const siteLabel = typeof site.name === 'string' ? site.name : '';
+      const volRef = await addDoc(collection(firestore, 'volunteers'), {
+        name: newVolunteerName.trim(),
+        email: emailNorm,
+        siteId: site.id,
+        site: siteLabel,
+        siteName: siteLabel,
+        registeredAt: serverTimestamp(),
+      });
+
       await addDoc(collection(firestore, `locations/${site.id}/volunteers`), {
-        name: newVolunteerName,
-        email: newVolunteerEmail,
+        name: newVolunteerName.trim(),
+        email: newVolunteerEmail.trim(),
+        emailNormalized: emailNorm,
         role: 'Registered Volunteer',
         registeredAt: new Date().toISOString(),
+        volunteersDocId: volRef.id,
       });
       setNewVolunteerName('');
       setNewVolunteerEmail('');
@@ -110,8 +151,28 @@ export default function SupervisorDashboard() {
 
   const handleCheckOut = async (id: string) => {
     if (!site) return;
+    const vol = volunteers.find((v) => v.id === id);
     try {
-      await deleteDoc(doc(firestore, `locations/${site.id}/volunteers`, id));
+      const subRef = doc(firestore, `locations/${site.id}/volunteers`, id);
+      const subSnap = await getDoc(subRef);
+      const volunteersDocId = subSnap.data()?.volunteersDocId as string | undefined;
+      const emailNorm = vol?.email ? normalizeEmail(vol.email) : undefined;
+
+      if (volunteersDocId) {
+        await deleteDoc(doc(firestore, 'volunteers', volunteersDocId));
+      } else if (emailNorm) {
+        const q = query(
+          collection(firestore, 'volunteers'),
+          where('siteId', '==', site.id),
+          where('email', '==', emailNorm)
+        );
+        const snap = await getDocs(q);
+        for (const d of snap.docs) {
+          await deleteDoc(d.ref);
+        }
+      }
+
+      await deleteDoc(subRef);
     } catch (error) {
       console.error(error);
     }
@@ -183,7 +244,7 @@ export default function SupervisorDashboard() {
               {site.name}
             </div>
             <div className="mt-2 text-xs font-bold uppercase tracking-widest text-brand-500 flex items-center justify-end gap-1">
-              <MapPin className="w-3 h-3" /> {site.location}
+              <MapPin className="w-3 h-3" /> {site.location?.lat ? `${site.location.lat.toFixed(4)}, ${site.location.lng.toFixed(4)}` : 'Location Set'}
             </div>
           </div>
         </div>
@@ -230,7 +291,7 @@ export default function SupervisorDashboard() {
                         <h3 className="text-lg font-bold text-brand-950">{v.name}</h3>
                         <p className="text-sm font-medium text-brand-600">{v.email}</p>
                         <p className="text-xs text-brand-500 flex items-center gap-1 mt-1">
-                          <Clock className="w-3 h-3" /> Registered on {format(new Date(v.registeredAt), 'MMM d, yyyy')}
+                          <Clock className="w-3 h-3" /> Registered on {v.registeredAt ? format(new Date(v.registeredAt), 'MMM d, yyyy') : 'Unknown Date'}
                         </p>
                       </div>
                     </div>
@@ -350,7 +411,6 @@ export default function SupervisorDashboard() {
                     autoFocus
                     required
                     className="w-full p-4 bg-brand-50 border border-brand-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-950/10 text-brand-950 font-medium"
-                    placeholder="e.g., Jane Doe"
                     value={newVolunteerName}
                     onChange={e => setNewVolunteerName(e.target.value)}
                   />
@@ -361,7 +421,6 @@ export default function SupervisorDashboard() {
                     type="email"
                     required
                     className="w-full p-4 bg-brand-50 border border-brand-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-950/10 text-brand-950 font-medium"
-                    placeholder="e.g., jane@example.com"
                     value={newVolunteerEmail}
                     onChange={e => setNewVolunteerEmail(e.target.value)}
                   />

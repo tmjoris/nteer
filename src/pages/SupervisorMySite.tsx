@@ -1,22 +1,49 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AlertCircle, CheckCircle2, MapPin, MessageSquare, Users } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  MapPin,
+  MessageSquare,
+  Trash2,
+  UserPlus,
+  Users,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useAuth } from '../lib/auth';
 import { cn } from '../lib/utils';
 import {
+  addDoc,
   collection,
+  deleteDoc,
   doc,
+  getDoc,
   getDocs,
   limit,
+  onSnapshot,
   query,
+  serverTimestamp,
   updateDoc,
   where,
   type DocumentData,
 } from 'firebase/firestore';
 import { firestore } from '../lib/firebase';
+
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
+type RosterVolunteer = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  registeredAt: string;
+  volunteersDocId?: string;
+};
 
 type LocationPoint = { lat: number; lng: number };
 type SiteDoc = {
@@ -68,6 +95,11 @@ export default function SupervisorMySite() {
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [showReviews, setShowReviews] = useState(false);
 
+  const [rosterVolunteers, setRosterVolunteers] = useState<RosterVolunteer[]>([]);
+  const [isAddingVolunteer, setIsAddingVolunteer] = useState(false);
+  const [newVolunteerName, setNewVolunteerName] = useState('');
+  const [newVolunteerEmail, setNewVolunteerEmail] = useState('');
+
   const primarySite = sites[0] ?? null;
   const siteId = primarySite?.id ?? null;
 
@@ -80,6 +112,23 @@ export default function SupervisorMySite() {
     const isFull = safeCapacity > 0 ? safeCurrent >= safeCapacity : false;
     return { capacity: safeCapacity, current: safeCurrent, pct, isFull };
   }, [primarySite?.capacity, primarySite?.current]);
+
+  useEffect(() => {
+    if (!siteId) {
+      setRosterVolunteers([]);
+      return;
+    }
+    const unsub = onSnapshot(collection(firestore, `locations/${siteId}/volunteers`), (snap) => {
+      const vols = snap.docs.map((d) => ({ id: d.id, ...d.data() } as RosterVolunteer));
+      vols.sort(
+        (a, b) =>
+          (b.registeredAt ? new Date(b.registeredAt).valueOf() : 0) -
+          (a.registeredAt ? new Date(a.registeredAt).valueOf() : 0)
+      );
+      setRosterVolunteers(vols);
+    });
+    return () => unsub();
+  }, [siteId]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -169,6 +218,96 @@ export default function SupervisorMySite() {
     if (next && siteId && reviews.length === 0) {
       await loadReviews();
     }
+  };
+
+  const handleAddVolunteer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!primarySite?.id || !newVolunteerName.trim() || !newVolunteerEmail.trim()) return;
+    if (rosterVolunteers.length >= computed.capacity) {
+      toast.error('Roster is at capacity.');
+      return;
+    }
+
+    const emailNorm = normalizeEmail(newVolunteerEmail);
+
+    try {
+      const dupQ = query(
+        collection(firestore, 'volunteers'),
+        where('siteId', '==', primarySite.id),
+        where('email', '==', emailNorm)
+      );
+      const dupSnap = await getDocs(dupQ);
+      if (!dupSnap.empty) {
+        toast.error('This email is already registered for this site.');
+        return;
+      }
+
+      const siteLabel = typeof primarySite.name === 'string' ? primarySite.name : '';
+      const volRef = await addDoc(collection(firestore, 'volunteers'), {
+        name: newVolunteerName.trim(),
+        email: emailNorm,
+        siteId: primarySite.id,
+        site: siteLabel,
+        siteName: siteLabel,
+        registeredAt: serverTimestamp(),
+      });
+
+      await addDoc(collection(firestore, `locations/${primarySite.id}/volunteers`), {
+        name: newVolunteerName.trim(),
+        email: newVolunteerEmail.trim(),
+        emailNormalized: emailNorm,
+        role: 'Registered Volunteer',
+        registeredAt: new Date().toISOString(),
+        volunteersDocId: volRef.id,
+      });
+
+      setNewVolunteerName('');
+      setNewVolunteerEmail('');
+      setIsAddingVolunteer(false);
+      toast.success('Volunteer added. They can review this site after signing in with this email.');
+    } catch (err) {
+      console.error(err);
+      toast.error('Could not add volunteer.');
+    }
+  };
+
+  const handleRemoveRosterVolunteer = async (id: string, silent?: boolean) => {
+    if (!primarySite?.id) return;
+    const vol = rosterVolunteers.find((v) => v.id === id);
+    try {
+      const subRef = doc(firestore, `locations/${primarySite.id}/volunteers`, id);
+      const subSnap = await getDoc(subRef);
+      const volunteersDocId = subSnap.data()?.volunteersDocId as string | undefined;
+      const emailNorm = vol?.email ? normalizeEmail(vol.email) : undefined;
+
+      if (volunteersDocId) {
+        await deleteDoc(doc(firestore, 'volunteers', volunteersDocId));
+      } else if (emailNorm) {
+        const q = query(
+          collection(firestore, 'volunteers'),
+          where('siteId', '==', primarySite.id),
+          where('email', '==', emailNorm)
+        );
+        const snap = await getDocs(q);
+        for (const d of snap.docs) await deleteDoc(d.ref);
+      }
+
+      await deleteDoc(subRef);
+      if (!silent) toast.success('Volunteer removed.');
+    } catch (err) {
+      console.error(err);
+      if (!silent) toast.error('Could not remove volunteer.');
+    }
+  };
+
+  const clearAllRosterVolunteers = async () => {
+    if (!primarySite?.id || rosterVolunteers.length === 0) return;
+    if (!window.confirm('Remove all volunteers from the roster?')) return;
+    const copy = [...rosterVolunteers];
+    for (const v of copy) {
+      await handleRemoveRosterVolunteer(v.id, true);
+    }
+    toast.success('Roster cleared.');
   };
 
   const saveSite = async () => {
@@ -574,6 +713,133 @@ export default function SupervisorMySite() {
               )}
             </aside>
           </div>
+
+          {/* Volunteer roster — synced to Firestore `volunteers` for review eligibility */}
+          <section className="mt-8 bg-white rounded-[2.5rem] border border-brand-100 shadow-sm p-8">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div>
+                <div className="text-xs font-bold uppercase tracking-widest text-brand-400">Reviews access</div>
+                <h3 className="mt-2 text-2xl font-serif font-bold text-brand-950">Volunteer roster</h3>
+                <p className="mt-2 text-brand-500 leading-relaxed max-w-2xl">
+                  Add volunteers by name and email. When they sign in with the same email as a volunteer account, they
+                  can post reviews on your public site page.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddingVolunteer(true)}
+                  disabled={rosterVolunteers.length >= computed.capacity}
+                  className="inline-flex items-center gap-2 px-5 py-3 bg-brand-950 text-white rounded-2xl text-sm font-bold hover:bg-brand-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <UserPlus className="w-4 h-4" /> Add volunteer
+                </button>
+                <button
+                  type="button"
+                  onClick={clearAllRosterVolunteers}
+                  disabled={rosterVolunteers.length === 0}
+                  className="inline-flex items-center gap-2 px-5 py-3 bg-brand-50 border border-brand-100 text-brand-950 rounded-2xl text-sm font-bold hover:bg-brand-100 transition-colors disabled:opacity-50"
+                >
+                  <Trash2 className="w-4 h-4" /> Clear all
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-brand-600">
+              <span>
+                Roster: <strong>{rosterVolunteers.length}</strong> / {computed.capacity}
+              </span>
+              {rosterVolunteers.length >= computed.capacity ? (
+                <span className="text-amber-700 font-bold">Roster full</span>
+              ) : null}
+            </div>
+
+            <div className="mt-6 space-y-3">
+              {rosterVolunteers.length === 0 ? (
+                <div className="p-10 rounded-2xl border border-dashed border-brand-200 text-center text-brand-400">
+                  No volunteers added yet.
+                </div>
+              ) : (
+                rosterVolunteers.map((v) => (
+                  <div
+                    key={v.id}
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-5 rounded-2xl border border-brand-100 bg-brand-50"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-brand-600 font-bold text-lg border border-brand-100">
+                        {v.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="font-bold text-brand-950">{v.name}</div>
+                        <div className="text-sm text-brand-600">{v.email}</div>
+                        <div className="text-xs text-brand-400 mt-1 inline-flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {v.registeredAt ? new Date(v.registeredAt).toLocaleDateString() : '—'}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveRosterVolunteer(v.id)}
+                      className="self-start sm:self-center px-4 py-2 rounded-xl text-sm font-bold bg-white border border-brand-100 hover:bg-red-50 hover:text-red-700 transition-colors"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+          {isAddingVolunteer ? (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+              <button
+                type="button"
+                aria-label="Close"
+                className="absolute inset-0 bg-brand-950/40 backdrop-blur-sm"
+                onClick={() => setIsAddingVolunteer(false)}
+              />
+              <div className="relative bg-white w-full max-w-md p-8 rounded-[2.5rem] shadow-2xl border border-brand-100">
+                <h2 className="text-2xl font-serif font-bold mb-6 text-brand-950">Register volunteer</h2>
+                <form onSubmit={handleAddVolunteer} className="space-y-6">
+                  <label className="block">
+                    <span className="block text-xs font-bold uppercase tracking-widest text-brand-400 mb-2">Full name</span>
+                    <input
+                      required
+                      value={newVolunteerName}
+                      onChange={(e) => setNewVolunteerName(e.target.value)}
+                      className="w-full p-4 bg-brand-50 border border-brand-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-950/10 text-brand-950 font-medium"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="block text-xs font-bold uppercase tracking-widest text-brand-400 mb-2">Email</span>
+                    <input
+                      type="email"
+                      required
+                      value={newVolunteerEmail}
+                      onChange={(e) => setNewVolunteerEmail(e.target.value)}
+                      className="w-full p-4 bg-brand-50 border border-brand-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-950/10 text-brand-950 font-medium"
+                    />
+                  </label>
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingVolunteer(false)}
+                      className="flex-1 py-4 bg-brand-50 rounded-xl font-bold text-brand-600 hover:bg-brand-100 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 py-4 bg-brand-950 text-white rounded-xl font-bold hover:bg-brand-800 transition-colors"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
       <Footer />

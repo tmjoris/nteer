@@ -26,6 +26,10 @@ type Review = {
   createdOn?: { toDate: () => Date };
 };
 
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
 export default function SiteDetail() {
   const { siteKey } = useParams<{ siteKey: string }>();
   const navigate = useNavigate();
@@ -90,12 +94,34 @@ export default function SiteDetail() {
       const usersQ = query(collection(firestore, 'user'), where('authUid', '==', user.uid), limit(1));
       const usersSnap = await getDocs(usersQ);
       const profileDoc = usersSnap.docs[0];
-      const profile = (profileDoc?.data() ?? {}) as any;
+      const profile = (profileDoc?.data() ?? {}) as Record<string, unknown>;
       const fullName = typeof profile.fullName === 'string' ? profile.fullName : undefined;
-      const userRole = typeof profile.userRole === 'string' ? profile.userRole : undefined;
-      setUserProfile({ fullName, userRole });
+      const userRole = typeof profile.userRole === 'string' ? profile.userRole.toLowerCase() : undefined;
+      setUserProfile({ fullName, userRole: profile.userRole as string | undefined });
 
-      setCanAddReview(userRole === 'volunteer');
+      if (userRole !== 'volunteer') {
+        setCanAddReview(false);
+        return;
+      }
+
+      const authEmail = user.email ? normalizeEmail(user.email) : '';
+      if (!authEmail) {
+        setCanAddReview(false);
+        return;
+      }
+
+      try {
+        const rosterQ = query(
+          collection(firestore, 'volunteers'),
+          where('email', '==', authEmail),
+          where('siteId', '==', siteKey),
+          limit(1)
+        );
+        const rosterSnap = await getDocs(rosterQ);
+        setCanAddReview(!rosterSnap.empty);
+      } catch {
+        setCanAddReview(false);
+      }
     };
 
     checkEligibility().catch(() => setCanAddReview(false));
@@ -275,7 +301,7 @@ export default function SiteDetail() {
                 </div>
               ) : !canAddReview ? (
                 <div className="p-6 rounded-2xl border border-brand-100 bg-brand-50 text-brand-400">
-                  Only volunteer accounts can add reviews.
+                  Only volunteers registered for this site (same email as on the supervisor roster) can add a review.
                 </div>
               ) : (
                 <form onSubmit={handleAddReview} className="space-y-4">

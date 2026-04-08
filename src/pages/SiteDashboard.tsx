@@ -17,7 +17,6 @@ import {
   serverTimestamp,
   where,
 } from 'firebase/firestore';
-import locations  from './SiteMap';
 
 type Review = {
   id: string;
@@ -28,10 +27,25 @@ type Review = {
   createdOn?: { toDate: () => Date };
 };
 
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
+/** Resolve map coords from Firestore location (object or GeoPoint-like). */
+function coordsFromSiteData(data: Record<string, unknown> | null): google.maps.LatLngLiteral | null {
+  if (!data) return null;
+  const loc = data.location as Record<string, unknown> | undefined;
+  if (!loc || typeof loc !== 'object') return null;
+  const lat = loc.lat ?? loc.latitude;
+  const lng = loc.lng ?? loc.longitude;
+  if (typeof lat === 'number' && typeof lng === 'number') return { lat, lng };
+  return null;
+}
+
 export default function SiteDashboard() {
   const { siteKey } = useParams<{ siteKey: string }>();
   const [user, setUser] = useState<User | null>(firebaseAuth.currentUser);
-  const [siteData, setSiteData] = useState<any | null>(null);
+  const [siteData, setSiteData] = useState<Record<string, unknown> | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
 
   const [canAddReview, setCanAddReview] = useState(false);
@@ -41,13 +55,9 @@ export default function SiteDashboard() {
   const [comment, setComment] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
-  const poi = useMemo(() => {
-    if (!siteKey) return null;
-    return locations.find((p) => p.key === siteKey) || null;
-  }, [siteKey]);
-
-  const mapCenter = poi?.location ?? { lat: -1.2921, lng: 36.8219 };
-  const mapZoom = poi ? 12 : 10;
+  const mapCoords = useMemo(() => coordsFromSiteData(siteData), [siteData]);
+  const mapCenter = mapCoords ?? { lat: -1.2921, lng: 36.8219 };
+  const mapZoom = mapCoords ? 12 : 10;
 
   useEffect(() => {
     const unsub = onAuthStateChanged(firebaseAuth, (nextUser) => {
@@ -63,9 +73,9 @@ export default function SiteDashboard() {
       // Load site details (Firestore-first)
       try {
         const snap = await getDoc(doc(firestore, 'locations', siteKey));
-        if (snap.exists()) setSiteData(snap.data());
+        if (snap.exists()) setSiteData(snap.data() as Record<string, unknown>);
       } catch {
-        // ignore; fall back to mock locations
+        // ignore
       }
 
       // Load reviews
@@ -99,20 +109,40 @@ export default function SiteDashboard() {
       const usersQ = query(collection(firestore, 'user'), where('authUid', '==', user.uid), limit(1));
       const usersSnap = await getDocs(usersQ);
       const profileDoc = usersSnap.docs[0];
-      const profile = (profileDoc?.data() ?? {}) as any;
+      const profile = (profileDoc?.data() ?? {}) as Record<string, unknown>;
       const fullName = typeof profile.fullName === 'string' ? profile.fullName : undefined;
-      const userRole = typeof profile.userRole === 'string' ? profile.userRole : undefined;
-      setUserProfile({ fullName, userRole });
+      const userRole = typeof profile.userRole === 'string' ? profile.userRole.toLowerCase() : undefined;
+      setUserProfile({ fullName, userRole: profile.userRole as string | undefined });
 
       if (userRole !== 'volunteer') {
         setCanAddReview(false);
         return;
       }
 
-      // 2) Check current/former volunteer membership at this site.
-      // Supported patterns (whichever exists in your DB):
-      // - user doc arrays: currentVolunteerSites/formerVolunteerSites (or currentSites/formerSites)
-      // - membership collection: siteVolunteers { authUid, siteKey, status: 'current'|'former' }
+      // 2) Supervisor-registered roster: top-level `volunteers` collection (email + siteId).
+      const authEmail = user.email ? normalizeEmail(user.email) : '';
+      if (!authEmail) {
+        setCanAddReview(false);
+        return;
+      }
+
+      try {
+        const rosterQ = query(
+          collection(firestore, 'volunteers'),
+          where('email', '==', authEmail),
+          where('siteId', '==', siteKey),
+          limit(1)
+        );
+        const rosterSnap = await getDocs(rosterQ);
+        if (!rosterSnap.empty) {
+          setCanAddReview(true);
+          return;
+        }
+      } catch {
+        // fall through to legacy checks
+      }
+
+      // 3) Legacy: user doc arrays or siteVolunteers membership
       const arrays = [
         profile.currentVolunteerSites,
         profile.formerVolunteerSites,
@@ -134,7 +164,7 @@ export default function SiteDashboard() {
           limit(1)
         );
         const membershipSnap = await getDocs(membershipQ);
-        const membership = membershipSnap.docs[0]?.data() as any;
+        const membership = membershipSnap.docs[0]?.data() as { status?: string } | undefined;
         const status = membership?.status;
         setCanAddReview(status === 'current' || status === 'former');
       } catch {
@@ -145,7 +175,7 @@ export default function SiteDashboard() {
     checkEligibility().catch(() => setCanAddReview(false));
   }, [siteKey, user]);
 
-  const siteName = (siteData?.name as string | undefined) || poi?.name || 'Site';
+  const siteName = (siteData?.name as string | undefined) || 'Site';
   const siteDescription =
     (siteData?.description as string | undefined) ||
     (siteData?.siteDescription as string | undefined) ||
@@ -215,8 +245,8 @@ export default function SiteDashboard() {
                 defaultZoom={mapZoom}
                 mapId="DEMO_MAP_ID"
               >
-                {poi && (
-                  <AdvancedMarker position={poi.location}>
+                {mapCoords && (
+                  <AdvancedMarker position={mapCoords}>
                     <div className="relative flex h-6 w-6">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
                       <span className="relative inline-flex rounded-full h-6 w-6 shadow-lg bg-blue-700 shadow-blue-500/50" />

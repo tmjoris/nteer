@@ -17,7 +17,7 @@ import {
   serverTimestamp,
   where,
 } from 'firebase/firestore';
-import { locations } from './SiteMap';
+import locations  from './SiteMap';
 
 type Review = {
   id: string;

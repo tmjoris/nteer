@@ -1,66 +1,14 @@
-import { useState, useMemo } from 'react';
-import { APIProvider, Map, MapCameraChangedEvent, AdvancedMarker, Pin } from '@vis.gl/react-google-maps';
-import { Search, MapPin, Users, Star, ArrowLeft, Info } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { APIProvider, Map, MapCameraChangedEvent, AdvancedMarker } from '@vis.gl/react-google-maps';
+import { Search, MapPin, Users, Star, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
+import { collection, onSnapshot, query } from 'firebase/firestore';
+import { firestore } from '../lib/firebase';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
 export type Poi = { key: string, location: google.maps.LatLngLiteral, name: string, cause: string, capacity: number, current: number, impactScore: number };
-
-export const locations: Poi[] = [
-{ key: "alice_home_utawala", location: { lat: -1.3012375801102751, lng: 36.97880585878275 }, name: "Alice Children's Home Utawala Volunteers", cause: "Arts", capacity: 50, current: 32, impactScore: 95 },
-{ key: "baby_blessing_umoja", location: { lat: -1.2873728295381877, lng: 36.893859632980664 }, name: "Baby Blessing Children’s Home Umoja", cause: "Animal Welfare", capacity: 30, current: 30, impactScore: 98 },
-{ key: "mama_fatma_home", location: { lat: -1.209201349185106, lng: 36.898414969228945 }, name: "Mama Fatma Goodwill Childrens Home", cause: "Environment", capacity: 45, current: 45, impactScore: 92 },
-{ key: "baraka_home_kahawa_west", location: { lat: -1.2629099281992866, lng: 36.9208903022985 }, name: "Baraka Children’s Home Kahawa West", cause: "Environment", capacity: 20, current: 12, impactScore: 88 },
-{ key: "babadogo_health_centre", location: { lat: -1.2442610882890712, lng: 36.884846553887904 }, name: "Babadogo Health Centre", cause: "Education", capacity: 8, current: 8, impactScore: 90 },
-{ key: "bishop_luigi_zimmerman", location: { lat: -1.208413392973839, lng: 36.89159716738197 }, name: "Bishop Opera Luigi Zimmerman", cause: "Community", capacity: 10, current: 9, impactScore: 85 },
-{ key: "cerebral_palsy_donholm", location: { lat: -1.2982490127116522, lng: 36.892197071050106 }, name: "Cerebral Palsy Society of Kenya Donholm", cause: "Arts", capacity: 25, current: 15, impactScore: 87 },
-{ key: "cottolengo_centre_karen", location: { lat: -1.3394082805578793, lng: 36.72763829943795 }, name: "Cottolengo Center", cause: "Health", capacity: 40, current: 38, impactScore: 96 },
-{ key: "karura_health_centre", location: { lat: -1.2561360998348625, lng: 36.84309555397505 }, name: "Karura Health Centre", cause: "Environment", capacity: 35, current: 20, impactScore: 93 },
-{ key: "christ_chapel_home", location: { lat: -1.2590043787909624, lng: 36.87634262088299 }, name: "Christ Chapel Children`s Home", cause: "Education", capacity: 12, current: 5, impactScore: 89 },
-{ key: "kahawa_west_health", location: { lat: -1.190159000972583, lng: 36.91430419943684 }, name: "Kahawa West Health Centre", cause: "Arts", capacity: 20, current: 18, impactScore: 91 },
-{ key: "community_progressive_focus", location: { lat: -1.2516616096928943, lng: 36.94328748096306 }, name: "Community Progressive Focus Centre", cause: "Community", capacity: 8, current: 4, impactScore: 82 },
-{ key: "dorothy_home_thome", location: { lat: -1.203956234105944, lng: 36.877991753887706 }, name: "Dorothy Children`s Home Thome", cause: "Animal Welfare", capacity: 25, current: 22, impactScore: 94 },
-{ key: "first_love_karen", location: { lat: -1.3293579537441624, lng: 36.747473480963556 }, name: "First Love Kenya Karen", cause: "Community", capacity: 60, current: 55, impactScore: 97 },
-{ key: "happy_life_roysambu", location: { lat: -1.2157114760334924, lng: 36.88620579445689 }, name: "Happy Life Children`s Home Roysambu", cause: "Environment", capacity: 15, current: 10, impactScore: 92 },
-{ key: "al_tawoon_youth_korogocho", location:{lat: -1.2513779803302305, lng: 36.89112782644024}, name:"Al-Tawoon Islamic Youth Group", cause:"Community", capacity:30, current:10, impactScore:85 },
-{ key: "ananda_marga_academy_huruma", location:{lat: -1.2722937796570462, lng: 36.75420329630453}, name:"Ananda Marga Academy Huruma", cause:"Education", capacity:20, current:10, impactScore:88 },
-{ key: "brook_school_deaf_kamiti", location:{lat: -1.209222802074535, lng: 36.89838278096287}, name:"Brook School for the Deaf & Autistic Kamiti Road", cause:"Education", capacity:15, current:6, impactScore:95 },
-{ key: "baraka_al_ibrahim_kibera", location:{lat:-1.3146827159107064, lng: 36.78502003196789}, name:"Baraka Za Ibrahim Children’s Center Kibera", cause:"Community", capacity:10, current:6, impactScore:87 },
-{ key: "cherish_watoto_learning_centre", location:{lat: -1.2722937796570462, lng: 36.75420329630453}, name:"Cherish Watoto Kenya Learning Centre", cause:"Education", capacity:45, current:22, impactScore:90 },
-{ key: "christs_victory_center_githurai", location:{lat: -1.2090619285117354, lng: 36.93263339445683}, name:"Christ's Victory Center Kimbo Githurai", cause:"Community", capacity:55, current:34, impactScore:85 },
-{ key: "community_progressive_focus_embakasi", location:{lat: -1.2515114418261875, lng: 36.94321237911563}, name:"Community Progressive Focus Centre", cause:"Community", capacity:22, current:14, impactScore:82 },
-{ key: "dream_centre_home_of_hope", location:{lat: -1.2920849319075773, lng: 36.90275044691993}, name:"Dream Centre Baby Rescue and Care", cause:"Children", capacity:35, current:16, impactScore:93 },
-{ key: "dagoretti_hidden_talent", location:{lat: -1.2977493935733377, lng: 36.74987346359377}, name:"Dagoretti Corner Child Care Program", cause:"Education", capacity:25, current:18, impactScore:88 },
-{ key: "grapes_yard_korogocho", location:{lat: -1.2724653963437262, lng: 36.95769633678646}, name:"Grapes Yard Organization Korogocho", cause:"Community", capacity:35, current:19, impactScore:86 },
-{ key: "hope_house_babies_home", location:{lat: -1.2680080366096689, lng: 36.73831219441074}, name:"Hope House Babies Home", cause:"Children", capacity:30, current:17, impactScore:93 },
-{ key: "imani_children_home_kayole", location:{lat: -1.2604358211371354, lng: 36.924826530436654}, name:"Imani Children’s Home Kayole", cause:"Children", capacity:15, current:7, impactScore:89 },
-{ key: "nest_children_home_runda", location:{lat: -1.0926009045437686, lng: 36.659452192343146}, name:"The Nest Children’s Home Runda", cause:"Children", capacity:45, current:23, impactScore:95 },
-{ key: "salvation_army_kabete_home", location:{lat: -1.2658928005890093, lng: 36.76512602144511}, name:"Salvation Army Kabete Children’s Home", cause:"Children", capacity:20, current:13, impactScore:90 },
-{ key: "jirani_education_centre_korogocho", location:{lat: -1.2457493990385187, lng: 36.89719539630452}, name:"Jirani Education Centre Korogocho", cause:"Education", capacity:45, current:22, impactScore:88 },
-{ key: "kabete_rehabilitation_center", location:{lat: -1.238707655841928, lng: 36.731315995742285}, name:"Kabete Rehabilitation Center", cause:"Health", capacity:67, current:32, impactScore:90 },
-{ key: "kangemi_health_centre", location:{lat: -1.2668917958173946, lng: 36.74922202329258}, name:"Kangemi Health Centre", cause:"Health", capacity:45, current:15, impactScore:88 },
-{ key: "kirigiti_girls_rehabilitation", location:{lat: -1.172165060639376, lng: 36.84723442329194}, name:"Kirigiti Girls Rehabilitation Center", cause:"Community", capacity:18, current:8, impactScore:89 },
-{ key: "kwetu_home_of_peace_madaraka", location:{lat:-1.3088951779477365, lng: 36.811234594457446}, name:"Kwetu Home of Peace Madaraka", cause:"Children", capacity:25, current:9, impactScore:91 },
-{ key: "kenya_women_children_wellness", location:{lat: -1.2060034637613832, lng: 36.88240586562139}, name:"Kenya Women and Children’s Wellness Centre", cause:"Health", capacity:35, current:19, impactScore:92 },
-{ key: "lower_kabete_dispensary", location:{lat: -1.2395503733507862, lng: 36.7459213147937}, name:"Lower Kabete Dispensary", cause:"Health", capacity:30, current:19, impactScore:88 },
-{ key: "mama_fatuma_children_home", location:{lat: -1.2670090268875722, lng: 36.8478446656218}, name:"Mama Fatuma Children’s Home", cause:"Children", capacity:25, current:18, impactScore:90 },
-{ key: "mama_fauzia_children_home", location:{lat: -1.2188175649670852, lng: 36.9142986521276}, name:"Mama Fauzia Children’s Home", cause:"Children", capacity:30, current:10, impactScore:89 },
-{ key: "mary_immaculate_rehab_center", location:{lat: -1.2111683517878724, lng: 36.896075560349615}, name:"Mary Immaculate Rehab Center", cause:"Health", capacity:40, current:20, impactScore:90 },
-{ key: "mary_immaculate_clinic", location:{lat: -1.3085331795041535, lng: 36.83896932549031}, name:"Mary Immaculate Clinic", cause:"Health", capacity:10, current:0, impactScore:88 },
-{ key: "mathare_north_health_centre", location:{lat: -1.2558957998163633, lng: 36.865562436786426}, name:"Mathare North Health Centre", cause:"Health", capacity:25, current:18, impactScore:87 },
-{ key: "mji_wa_huruma_runda", location:{lat: -1.2250776447083183, lng: 36.827504465621494}, name:"Mji-Wa-Huruma Dispensary Runda", cause:"Health", capacity:15, current:8, impactScore:89 },
-{ key: "msamaria_mwema_children_home", location:{lat: -1.22593797237105, lng: 36.72899601349304}, name:"Msamaria Mwema Children Home", cause:"Children", capacity:18, current:10, impactScore:90 },
-{ key: "nairobi_children_home", location:{lat: -1.239138325062625, lng: 36.7336275852492}, name:"Nairobi Children’s Home", cause:"Children", capacity:20, current:18, impactScore:95 },
-{ key: "new_life_home_trust_lenana", location:{lat: -1.2886887456467833, lng: 36.78782033678651}, name:"New Life Home Trust Lenana Road", cause:"Children", capacity:20, current:5, impactScore:94 },
-{ key: "new_life_home_kibera", location:{lat: -1.305678780975741, lng: 36.782262459806425}, name:"New Life Home Kibera", cause:"Community", capacity:22, current:15, impactScore:90 },
-{ key: "ngara_health_centre", location:{lat: -1.273074163017246, lng: 36.83150480795122}, name:"Ngara Health Centre", cause:"Health", capacity:25, current:17, impactScore:88 },
-{ key: "nyumba_ya_wazee_kasarani", location:{lat:-1.2304624506008681, lng: 36.88736185212755 }, name:"Nyumba ya Wazee Kasarani", cause:"Community", capacity:15, current:10, impactScore:89 },
-{ key: "our_lady_of_guadalupe_kamiti", location:{lat: -1.300888203342576, lng: 36.77918826562205}, name:"Our Lady of Guadalupe Parish Adams", cause:"Community", capacity:20, current:11, impactScore:87 },
-{ key: "rehema_pefa_home", location:{lat: -1.232884356170069, lng: 36.86738579445699}, name:"Rehema Pefa Home", cause:"Children", capacity:18, current:6, impactScore:90 },
-{ key: "st_scholastica_uzima_hospital", location:{lat: -1.2536117733736407, lng: 36.85664315212764}, name:"St. Scholastica Uzima Hospital", cause:"Health", capacity:20, current:8, impactScore:91 },
-];
 
 interface SiteMapProps {
   onBack: () => void;
@@ -71,6 +19,27 @@ const SiteMap: React.FC<SiteMapProps> = ({ onBack }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [mapCenter, setMapCenter] = useState({ lat: -1.227571545396187, lng: 36.888712784552965 });
   const [selectedSite, setSelectedSite] = useState<Poi | null>(null);
+  const [locations, setLocations] = useState<Poi[]>([]);
+
+  useEffect(() => {
+    const q = query(collection(firestore, 'locations'));
+    const unsub = onSnapshot(q, (snap) => {
+      const fetched = snap.docs.map(doc => {
+        const data = doc.data();
+        return {
+          key: doc.id,
+          location: data.location || { lat: -1.251, lng: 36.891 },
+          name: data.name || 'Unnamed Site',
+          cause: data.cause || 'Community',
+          capacity: data.capacity || 0,
+          current: data.current || 0,
+          impactScore: data.impactScore || 0
+        } as Poi;
+      });
+      setLocations(fetched);
+    });
+    return () => unsub();
+  }, []);
 
   const filteredPois = useMemo(() => {
     if (!searchQuery) return [];

@@ -20,7 +20,8 @@ import {
   CheckCircle2,
   Menu,
   X,
-  PlusCircle
+  PlusCircle,
+  Lightbulb
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { VolunteerSite, SiteAdvice } from '../types';
@@ -127,6 +128,7 @@ export default function Dashboard() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [myImpact, setMyImpact] = useState({ hours: 12, sites: 3, points: 450 });
+  const [showTip, setShowTip] = useState(true);
   const navigate = useNavigate();
 
   const filteredSites = useMemo(() => {
@@ -180,6 +182,33 @@ export default function Dashboard() {
               Connect with local organizations that need your skills. Just like hailing a ride, find your next mission in minutes.
             </p>
             
+            <div className="relative z-40">
+              <AnimatePresence>
+                {showTip && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    className="absolute top-full mt-5 left-4 w-80 bg-[#006aba] text-white p-4 rounded-xl shadow-2xl z-50 border border-blue-500/20"
+                  >
+                    <div className="absolute -top-2 left-6 w-4 h-4 bg-[#006aba] rotate-45 border-l border-t border-blue-500/20"></div>
+                    <div className="relative z-10 flex justify-between items-start mb-3">
+                      <div className="flex items-center gap-2 font-bold text-sm tracking-wide">
+                        <Lightbulb className="w-4 h-4" /> Tips
+                      </div>
+                      <button onClick={() => setShowTip(false)} className="text-white/70 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-md p-1">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="relative z-10 font-bold mb-1.5 text-[15px]">
+                      Quick context, big impact
+                    </div>
+                    <div className="relative z-10 text-sm leading-relaxed text-blue-50">
+                      Use the search bar below to find volunteer sites by cause or location.
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             <div className="bg-white p-2 rounded-2xl shadow-xl flex items-center gap-2 border border-brand-200">
               <div className="flex-1 flex items-center gap-3 px-4">
                 <Search className="w-5 h-5 text-brand-400" />
@@ -233,6 +262,7 @@ export default function Dashboard() {
                 </motion.div>
             )}
             </AnimatePresence>
+            </div>
           </div>
         </div>
 

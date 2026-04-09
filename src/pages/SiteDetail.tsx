@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { firebaseAuth, firestore } from '../lib/firebase';
 import { type User, onAuthStateChanged } from 'firebase/auth';
+import { APIProvider, Map, AdvancedMarker } from '@vis.gl/react-google-maps';
 import {
   addDoc,
   collection,
@@ -202,6 +203,18 @@ export default function SiteDetail() {
     );
   };
 
+  const coords = (() => {
+  const loc = siteData?.location;
+  if (!loc || typeof loc !== 'object') return null;
+
+  const lat = typeof loc.lat === 'number' ? loc.lat : null;
+  const lng = typeof loc.lng === 'number' ? loc.lng : null;
+
+  if (lat === null || lng === null) return null;
+
+  return { lat, lng };
+})();
+
   return (
     <>
       <Navbar />
@@ -260,6 +273,27 @@ export default function SiteDetail() {
               <p className="text-brand-600 leading-relaxed">
                 {siteDescription?.trim() ? siteDescription : 'No description available.'}
               </p>
+              {coords && (
+              <div className="mt-8 rounded-[2.5rem] overflow-hidden shadow-2xl border border-brand-200 bg-white">
+                <APIProvider apiKey={import.meta.env.VITE_MAPS_API_KEY}>
+                  <div className="relative h-[360px]">
+                    <Map
+                      style={{ width: '100%', height: '100%' }}
+                      center={coords}
+                      defaultZoom={14}
+                      mapId="DEMO_MAP_ID"
+                    >
+                      <AdvancedMarker position={coords}>
+                        <div className="relative flex h-6 w-6">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-6 w-6 shadow-lg bg-blue-700 shadow-blue-500/50" />
+                        </div>
+                      </AdvancedMarker>
+                    </Map>
+                  </div>
+                </APIProvider>
+              </div>
+            )}
             </div>
           </div>
 
